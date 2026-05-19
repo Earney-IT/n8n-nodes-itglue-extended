@@ -240,7 +240,8 @@ test('non-secret object untouched', () => {
 
 - [ ] **Step 2: Run → FAIL.** `npx jest engine/redact`
 
-- [ ] **Step 3: Implement** `redact.ts`: export `REDACTED='***REDACTED***'` and `SECRET_KEY_RE = /(^|[-_])(password|otp|otp[-_]?secret|one[-_]?time[-_]?password)($|[-_])/i`. `redactSecrets(v)` deep-clones and, for any object key matching `SECRET_KEY_RE` (or exactly `password`/`otp`), replaces the value with `REDACTED`; recurses into arrays/objects. Pure, no mutation of input.
+- [ ] **Step 3: Implement** `redact.ts`: export `REDACTED='***REDACTED***'` and `redactSecrets(v)` (pure deep-clone, recurses arrays/plain objects, secret key ⇒ value→`REDACTED` regardless of value type, prototype-pollution safe via `Object.defineProperty`).
+  - **CORRECTED (security review, commit `0f69ee4`):** detection MUST be casing/separator-agnostic because `flattenResource` camelCases IT Glue's kebab attributes *before* redaction runs. Normalize each key with `key.replace(/[-_]/g,'').toLowerCase()`, then: `NON_SECRET_KEY_RE = /^(passwords|passwordcategory(id|name)?|passwordfolder(id|name)?|password(updated|created|changed|recorded)(at|by)?|passwordresetat|otpenabled)$/` ⇒ NOT secret (handler needs these; `passwords` is a JSON:API relationship key); else bare `password`/`otp` ⇒ secret; else `SECRET_KEY_RE = /(password|passphrase|otpsecret|onetimepassword)/i` ⇒ secret. Do NOT broaden to generic `secret`/`key`/`token` (flexible-asset traits are user-named). The old separator-anchored regex `/(^|[-_])...($|[-_])/i` is SUPERSEDED — it leaked compound `*-password`/`*-otp` post-flatten.
 
 - [ ] **Step 4: Run → PASS**
 
@@ -610,7 +611,7 @@ test('getVersions returns redacted version list', async () => {
   - `create`/`update`: build `passwords` JSON:API body from inputs (name, username, password, url, notes, password-category-id, password-folder-id, restricted, otp-secret, organization-id; org-scoped POST `organizations/<orgId>/relationships/passwords` when orgId given).
   - `archive`/`restore`: `PATCH passwords/<id>` with attributes `{ archived: true|false }`.
   - `getVersions`: `GET passwords/<id>/relationships/password_versions` (paginated); `getVersion`: `GET password_versions/<versionId>`.
-  - Post-process: `flattenResource`; if `reveal` → attach `_passwordRevealed:true` (no redact); else → `redactSecrets` and attach `_passwordRedactedReason: isToolExecution(ctx)?'blocked in AI/tool context':'reveal not enabled'`.
+  - Post-process: `flattenResource`; if `reveal` → attach `_passwordRevealed:true` (no redact); else → `redactSecrets` and attach `_passwordRedactedReason: isToolExecution(ctx)?'blocked in AI/tool context':'reveal not enabled'`. (Note: `redactSecrets` is casing-agnostic as of `0f69ee4`, so redacting *after* `flattenResource` is correct and safe — the camelCase keys are still caught.)
   - return via `returnJsonArray`.
 
 - [ ] **Step 4: Run → PASS**
