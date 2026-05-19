@@ -31,6 +31,15 @@ import { descriptor as attachment } from './resources/attachment';
 import { descriptor as relatedItem } from './resources/relatedItem';
 import { descriptor as exportResource } from './resources/export';
 import { descriptor as document } from './resources/document';
+// Gated resources (unverified endpoints — excluded from enabledResources until confirmed by scripts/verify-endpoints.ts)
+import { descriptor as passwordFolder } from './resources/gated/passwordFolder';
+import { descriptor as sslCertificate } from './resources/gated/sslCertificate';
+import { descriptor as checklist } from './resources/gated/checklist';
+import { descriptor as checklistTask } from './resources/gated/checklistTask';
+import { descriptor as checklistTemplate } from './resources/gated/checklistTemplate';
+import { descriptor as ticket } from './resources/gated/ticket';
+import { descriptor as networkGlue } from './resources/gated/networkGlue';
+import { descriptor as copilot } from './resources/gated/copilot';
 
 export const registry: ResourceDescriptor[] = [
   // Generic resources
@@ -66,6 +75,15 @@ export const registry: ResourceDescriptor[] = [
   relatedItem,
   exportResource,
   document,
+  // Gated resources (unverified — not in node UI until Part B live verification)
+  passwordFolder,
+  sslCertificate,
+  checklist,
+  checklistTask,
+  checklistTemplate,
+  ticket,
+  networkGlue,
+  copilot,
 ];
 
 export const enabledResources: ResourceDescriptor[] = registry.filter(r => !r.gated);
