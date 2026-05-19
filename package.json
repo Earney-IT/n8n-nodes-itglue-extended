@@ -1,0 +1,42 @@
+{
+  "name": "n8n-nodes-itglue-extended",
+  "version": "2.0.0",
+  "description": "Comprehensive IT Glue API node for n8n: full CRUD on every resource, secret-safe passwords, AI-agent ready",
+  "keywords": ["n8n-community-node-package", "n8n-nodes-itglue", "itglue", "kaseya", "msp"],
+  "license": "MIT",
+  "homepage": "https://github.com/Earney-IT/n8n-nodes-itglue-extended",
+  "author": { "name": "Tristen Rice", "email": "support@earneyit.com" },
+  "repository": { "type": "git", "url": "git+https://github.com/Earney-IT/n8n-nodes-itglue-extended.git" },
+  "bugs": { "url": "https://github.com/Earney-IT/n8n-nodes-itglue-extended/issues" },
+  "engines": { "node": ">=20.15" },
+  "main": "index.js",
+  "scripts": {
+    "build": "npx rimraf dist && tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint nodes credentials package.json",
+    "lintfix": "eslint nodes credentials package.json --fix",
+    "test": "jest",
+    "prepublishOnly": "npm run build && npm test && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
+  },
+  "files": ["dist", "docs", "README.md", "CHANGELOG.md"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/ITGlueApi.credentials.js"],
+    "nodes": ["dist/nodes/ITGlue/ITGlue.node.js"]
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^24.5.0",
+    "@typescript-eslint/parser": "~8.32.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.3",
+    "gulp": "^5.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": { "n8n-workflow": "*" }
+}
