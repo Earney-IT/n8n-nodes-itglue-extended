@@ -43,3 +43,25 @@ test('missing region fails fast with a clear message', async () => {
   const ctx = makeCtx({ credentials: { region: '', apiKey: 'k' } });
   await expect(itGlueApiRequest.call(ctx, 'GET', 'passwords')).rejects.toThrow(/missing the "region" field/);
 });
+
+test('retries once on 429 then succeeds', async () => {
+  const ctx = makeCtx();
+  let n = 0;
+  ctx.helpers.httpRequestWithAuthentication = async () => {
+    if (n++ === 0) { const e: any = new Error('rl'); e.response = { status: 429, headers: { 'retry-after': '0' } }; throw e; }
+    return { data: [{ id: '1' }] };
+  };
+  const { itGlueApiRequest } = require('./request');
+  const res = await itGlueApiRequest.call(ctx, 'GET', 'passwords');
+  expect(res).toEqual({ data: [{ id: '1' }] });
+  expect(n).toBe(2);
+});
+
+test('apiRequestAllItems aggregates pages and stops on short page', async () => {
+  const page1 = { data: Array.from({ length: 1000 }, (_, i) => ({ id: String(i) })) };
+  const page2 = { data: [{ id: '1000' }] };
+  const ctx = makeCtx({ httpResponses: [page1, page2] });
+  const { itGlueApiRequestAllItems } = require('./request');
+  const all = await itGlueApiRequestAllItems.call(ctx, 'GET', 'passwords');
+  expect(all).toHaveLength(1001);
+});

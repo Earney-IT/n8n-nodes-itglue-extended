@@ -10,6 +10,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 import { toNodeError } from './errors';
+import { withRetry } from './rateLimit';
 
 type ITGlueCtx =
 	| IExecuteFunctions
@@ -48,12 +49,39 @@ export async function itGlueApiRequest(
 	}
 
 	try {
-		return (await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'itglueApi',
-			options,
+		return (await withRetry(() =>
+			this.helpers.httpRequestWithAuthentication.call(this, 'itglueApi', options),
 		)) as IDataObject;
 	} catch (error) {
 		throw toNodeError(this, error);
 	}
+}
+
+export async function itGlueApiRequestAllItems(
+	this: ITGlueCtx,
+	method: IHttpRequestMethods,
+	resource: string,
+	body: IDataObject = {},
+	qs: IDataObject = {},
+): Promise<IDataObject[]> {
+	const pageSize = Number(qs['page[size]'] ?? 1000) || 1000;
+	const query: IDataObject = { ...qs, 'page[size]': pageSize };
+	const MAX_PAGES = 200;
+	let pageNumber = 1;
+	const out: IDataObject[] = [];
+	for (;;) {
+		if (pageNumber > MAX_PAGES) {
+			throw new NodeOperationError(
+				(this as IExecuteFunctions).getNode(),
+				`IT Glue returned more than ${MAX_PAGES} pages. Add filters to narrow the result set.`,
+			);
+		}
+		query['page[number]'] = pageNumber;
+		const resp = await itGlueApiRequest.call(this, method, resource, body, query);
+		const data = (resp.data as IDataObject[]) ?? [];
+		out.push(...data);
+		if (data.length < pageSize) break;
+		pageNumber++;
+	}
+	return out;
 }
