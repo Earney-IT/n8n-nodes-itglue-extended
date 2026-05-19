@@ -19,6 +19,7 @@ const SPECIAL_HANDLERS: Record<NonNullable<ResourceDescriptor['special']>, Speci
 	flexibleAssets: executeFlexibleAsset,
 	attachments: executeAttachment,
 	relatedItems: executeRelatedItem,
+	// executeExport has an extra test-only opts arg; dispatch always calls (this,index). Cast is intentional.
 	exports: executeExport as SpecialHandler,
 	documents: executeDocument,
 };

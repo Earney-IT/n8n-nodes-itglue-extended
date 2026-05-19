@@ -19,7 +19,7 @@
     "test": "jest",
     "prepublishOnly": "npm run build && npm test && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
   },
-  "files": ["dist", "docs", "README.md", "CHANGELOG.md"],
+  "files": ["dist/nodes", "dist/credentials", "README.md", "CHANGELOG.md"],
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": ["dist/credentials/ITGlueApi.credentials.js"],

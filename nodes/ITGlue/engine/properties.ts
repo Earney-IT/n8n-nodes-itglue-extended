@@ -192,6 +192,7 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
   // 2. ID param for every operation that acts on a single existing record.
   //    EXCLUDED: getAll/create/bulk*/createAndWait take no path id;
   //    getVersion uses a separate `versionId` descriptor field.
+  // Denylist: every other OperationName acts on a single record by id. New no-id ops MUST be added here; new id-bearing ops are covered automatically.
   const ID_EXCLUDED = new Set<OperationName>([
     'getAll', 'create', 'bulkUpdate', 'bulkDelete', 'createAndWait', 'getVersion',
   ]);
