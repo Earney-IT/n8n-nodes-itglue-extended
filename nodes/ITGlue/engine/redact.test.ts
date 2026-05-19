@@ -1,4 +1,5 @@
 import { redactSecrets, REDACTED } from './redact';
+import { flattenResource } from './jsonapi';
 
 test('redacts password / otp / *-password recursively, preserves other fields', () => {
   const out = redactSecrets([{ id: '1', password: 'p', 'otp-secret': 's', name: 'ok', child: { 'admin-password': 'q' } }]);
@@ -72,4 +73,53 @@ test('case-insensitive: PASSWORD, OTP are redacted', () => {
 
 test('otp_secret is redacted', () => {
   expect(redactSecrets({ otp_secret: 'totp', other: 1 })).toEqual({ otp_secret: REDACTED, other: 1 });
+});
+
+// --- Casing/separator-agnostic security contracts (post-flattenResource) ---
+
+test('camelCase compound secrets ARE redacted (post-flattenResource shape)', () => {
+  expect(redactSecrets({
+    adminPassword: 'a', dbPassword: 'b', wifiPassword: 'c',
+    otpSecret: 'd', oneTimePassword: 'e', passphrase: 'f',
+  })).toEqual({
+    adminPassword: REDACTED, dbPassword: REDACTED, wifiPassword: REDACTED,
+    otpSecret: REDACTED, oneTimePassword: REDACTED, passphrase: REDACTED,
+  });
+});
+
+test('password metadata fields are NOT redacted (handler needs them)', () => {
+  expect(redactSecrets({
+    passwordUpdatedAt: '2026-05-19T00:00:00Z',
+    passwordCategoryId: '12', passwordCategoryName: 'VPN',
+    passwordFolderId: '7', otpEnabled: true, name: 'VPN',
+  })).toEqual({
+    passwordUpdatedAt: '2026-05-19T00:00:00Z',
+    passwordCategoryId: '12', passwordCategoryName: 'VPN',
+    passwordFolderId: '7', otpEnabled: true, name: 'VPN',
+  });
+});
+
+test('"passwords" relationship key is NOT redacted but bare "password" IS', () => {
+  expect(redactSecrets({ password: 'x', relationships: { passwords: { data: [{ id: '1' }] } } }))
+    .toEqual({ password: REDACTED, relationships: { passwords: { data: [{ id: '1' }] } } });
+});
+
+test('deep input is not mutated and a new reference is returned', () => {
+  const input = { a: { b: { password: 'x' } } };
+  const snap = JSON.parse(JSON.stringify(input));
+  const out = redactSecrets(input);
+  expect(input).toEqual(snap);
+  expect(out).not.toBe(input);
+  expect((out as any).a).not.toBe(input.a);
+});
+
+test('secrets survive the flattenResource -> redactSecrets pipeline', () => {
+  const apiItem = { id: '3', type: 'passwords',
+    attributes: { name: 'VPN', password: 'topsecret', 'otp-secret': 'TOTPSEED', 'admin-password': 'p', 'password-category-id': '9' } };
+  const out = redactSecrets(flattenResource(apiItem));
+  expect(out).toMatchObject({
+    id: '3', type: 'passwords', name: 'VPN',
+    password: REDACTED, otpSecret: REDACTED, adminPassword: REDACTED,
+    passwordCategoryId: '9',
+  });
 });
