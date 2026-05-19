@@ -52,7 +52,7 @@ Problems being fixed:
 | Coverage | Everything, including newer Kaseya endpoints |
 | Unverified endpoints | Ship only after live-key verification (user pastes key at the verification step) |
 | AI tooling | One node, `usableAsTool`, every operation AI-callable, `$fromAI()` defaults, LLM-grade descriptions |
-| Passwords | Full power: reveal (`show_password`), versions/history, archive/restore, embedded/OTP, folders |
+| Passwords | Full lifecycle (create/update/rotate/versions/archive/folders). Plaintext reveal **fail-closed**: never via AI/tool path; redacted by default |
 | Region | US (`api.itglue.com`) default; EU/AU selectable |
 | Architecture | Registry-driven generic engine + targeted special handlers |
 
@@ -154,19 +154,58 @@ account is removed (not faked) before release.
 Org-scoped nested create/list routes are offered (where the API requires or
 benefits from them) via an optional "Scope to Organization" input.
 
-## 6. Password subsystem (explicit requirement)
+## 6. Password subsystem (explicit requirement — secret-safe for AI use)
 
-- **Create / Update** full attribute set: name, username, password, url, notes,
-  `password_category_id`, `password_folder_id`, `resource`/related item linkage,
-  `restricted`, OTP/embedded secret, autofill settings, organization scoping.
-- **Reveal:** `show_password` parameter; **default true on Get (single)**,
-  optional toggle on Get Many (default false to avoid bulk secret dumps unless
-  asked). Surfaces IT Glue's note that API reveal can trigger the Password
-  Access workflow notification — documented in README/field hints.
-- **Versioning / history:** expose password versions via `include=recent_versions`
-  and the version retrieval route; operation "Get Versions" + "Get Version".
+The user operates this node with LLM agents (Claude). Plaintext secrets must
+never flow into a model's observation/context. The reveal policy is
+**fail-closed**: a secret is only ever returned in plaintext when the node can
+*positively prove* it is running in a normal (non-tool) workflow execution
+**and** the workflow author explicitly enabled reveal. Any uncertainty → redact.
+
+### 6.1 Reveal policy (strict — "never via AI/tool path")
+
+- **Default everywhere:** `show_password` is **false**. The
+  `show_password=true` query param is sent to IT Glue *only* when the guarded
+  reveal path below is satisfied — otherwise it is never sent.
+- **Author control, not AI control:** reveal is gated by a fixed node parameter
+  `revealPlaintext` (boolean, default **false**). It has **no `$fromAI()`
+  default** and any AI-supplied value for it is ignored — an agent cannot set
+  it. (Belt-and-braces: the reveal parameter is excluded from the AI tool
+  schema.)
+- **Tool/AI execution is hard-blocked:** before any reveal, the node must get a
+  positive confirmation that the current execution is NOT a node-as-tool / AI
+  invocation, using the available n8n runtime signals (execution mode,
+  node-as-tool wrapper indicators in `additionalData`/inputs). If those signals
+  indicate a tool invocation, **or are inconclusive across n8n versions, the
+  node fails closed and redacts.** Reveal only proceeds when execution is
+  positively a normal workflow run AND `revealPlaintext` is true.
+- **Output redaction is unconditional unless reveal succeeded:** every response
+  (Get, Get Many, Create, Update — IT Glue echoes the password on
+  create/update) is passed through a redactor that replaces `password`, OTP /
+  one-time-password / embedded secret, and any `*-password` attribute with
+  `***REDACTED***` before it leaves the node, *unless* the guarded reveal path
+  succeeded for that single operation. Bulk/Get-Many can never reveal.
+- **Audit note:** when reveal does fire, output includes
+  `_passwordRevealed: true` and a reminder that IT Glue's Password Access
+  workflow may notify on API reveal. When blocked in tool context, output
+  includes `_passwordRedactedReason: "blocked in AI/tool context"` so the
+  agent gets a clear, non-secret explanation instead of silence.
+
+### 6.2 Full lifecycle (no plaintext required)
+
+- **Create / Update / Rotate** full attribute set: name, username, password,
+  url, notes, `password_category_id`, `password_folder_id`,
+  `resource`/related-item linkage, `restricted`, OTP/embedded secret, autofill
+  settings, organization scoping. Agents can create, update, and rotate
+  passwords normally — the *input* secret may be agent-supplied or generated;
+  the *response* is still redacted, so rotating a credential never leaks the
+  value back into the model.
+- **Versioning / history:** password versions via `include=recent_versions`
+  and the version retrieval route; operations "Get Versions" / "Get Version".
+  Version payloads are run through the same redactor and same fail-closed gate.
 - **Archive / Restore:** archive and unarchive operations.
-- **Embedded passwords / OTP:** supported fields on create/update.
+- **Embedded passwords / OTP:** supported on create/update (write); redacted on
+  read.
 - **Password Folders:** full CRUD (verification-gated resource).
 
 ## 7. Flexible Assets dynamic fields
@@ -192,8 +231,11 @@ bulk delete. Parent selected by `resourceType` + `resourceId`.
 - Every operation has an LLM-grade `action` and `description`; resource and
   operation option names verbose and unambiguous.
 - Key parameters carry `$fromAI()`-style expression defaults so a Tools-Agent
-  can populate them; safe fixed defaults where AI input is undesirable
-  (e.g. bulk secret reveal stays off).
+  can populate them; safe fixed defaults where AI input is undesirable. The
+  password `revealPlaintext` control specifically carries **no `$fromAI()`
+  default, is excluded from the generated AI tool schema, and ignores any
+  AI-supplied value** (see §6.1) — an agent can manage passwords but can never
+  cause one to be revealed.
 - Mitigation for n8n issue #26202 (community `usableAsTool` wrappers returning
   an empty observation): `execute` always returns populated
   `INodeExecutionData` including a concise human/LLM-readable result summary
@@ -218,7 +260,17 @@ Jest + mocked HTTP (no live calls in unit tests):
   per-op fields, includes/filters) snapshot.
 - `pagination.ts`: multi-page aggregation, page cap, partial last page.
 - `transport`: 401/403/429 mapping, 429 backoff/retry, URL join (no `//`).
-- Passwords: `show_password` default logic (single vs many), version ops.
+- Passwords (security-critical, fail-closed):
+  - `show_password` query param is NEVER sent unless the guarded reveal path
+    succeeded.
+  - Tool/AI execution context → output redacted even when `revealPlaintext`
+    is true.
+  - Inconclusive execution-context signal → fails closed (redacted).
+  - AI-supplied value for `revealPlaintext` is ignored.
+  - Create/Update/Get/Get-Many/Version responses are redacted unless reveal
+    succeeded; redactor covers `password`, OTP/embedded secret, `*-password`.
+  - Reveal success path (normal execution + author toggle) returns plaintext
+    and sets `_passwordRevealed: true`.
 - Attachments: binary → base64 body shape.
 
 Lint: `eslint-plugin-n8n-nodes-base`. Build: `tsc` + gulp icon copy.
