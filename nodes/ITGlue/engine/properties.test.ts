@@ -75,6 +75,22 @@ test('empty operations throws', () => {
   })).toThrow(/no operations/);
 });
 
+test('bulkUpdate/bulkDelete emit bulkItems/bulkIds inputs', () => {
+  const dd = { name:'x', displayName:'X', jsonApiType:'xs', endpoint:'xs', operations:['bulkUpdate','bulkDelete'] as any, fields:[] };
+  const props = buildResourceProperties(dd as any);
+  const bi = props.find(p=>p.name==='bulkItems'); const bid = props.find(p=>p.name==='bulkIds');
+  expect(bi).toBeDefined(); expect(bi!.displayOptions!.show!.operation).toEqual(['bulkUpdate']);
+  expect(bid).toBeDefined(); expect(bid!.displayOptions!.show!.operation).toEqual(['bulkDelete']);
+});
+
+test('hideFromAITool field gets @tool:[false] in displayOptions.show', () => {
+  const dd = { name:'p', displayName:'P', jsonApiType:'ps', endpoint:'ps', operations:['get'] as any,
+    fields:[{ displayName:'Reveal', name:'revealPlaintext', attribute:'reveal-plaintext', type:'boolean', default:false, onOperations:['get'] as any, hideFromAITool:true }] };
+  const props = buildResourceProperties(dd as any);
+  const rp = props.find(p=>p.name==='revealPlaintext')!;
+  expect(rp.displayOptions!.show!['@tool']).toEqual([false]);
+});
+
 test('password + loadOptions field shapes; orgScoped create-only', () => {
   const d2: ResourceDescriptor = {
     name: 'pw', displayName: 'Password', jsonApiType: 'passwords', endpoint: 'passwords',

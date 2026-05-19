@@ -122,6 +122,7 @@ export const descriptor: ResourceDescriptor = {
       type: 'boolean',
       default: false,
       onOperations: ['get', 'getVersion'],
+      hideFromAITool: true,
       description: 'Author-only: reveal the plaintext password. IGNORED when the node runs as an AI/agent tool (fail-closed). Never settable by AI.',
     },
     // passwordId is auto-emitted by buildResourceProperties for every

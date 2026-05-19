@@ -127,6 +127,16 @@ function toTitleCase(s: string): string {
 }
 
 function buildFieldProperty(f: FieldDescriptor, resourceName: string, operations: OperationName[]): INodeProperties {
+  const showBlock: Record<string, unknown[]> = {
+    resource: [resourceName],
+    operation: operations,
+  };
+
+  // FIX 2: belt-and-braces AI tool exclusion (spec §6.1/§9)
+  if (f.hideFromAITool) {
+    showBlock['@tool'] = [false];
+  }
+
   const prop: INodeProperties = {
     displayName: f.displayName,
     name: f.name,
@@ -135,10 +145,7 @@ function buildFieldProperty(f: FieldDescriptor, resourceName: string, operations
     // I4: only emit required when true
     ...(f.required ? { required: true } : {}),
     displayOptions: {
-      show: {
-        resource: [resourceName],
-        operation: operations,
-      },
+      show: showBlock,
     },
   } as INodeProperties;
 
@@ -223,6 +230,39 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
     }
     const fieldOps = f.onOperations ?? (['create', 'update'] as OperationName[]);
     props.push(buildFieldProperty(f, d.name, fieldOps));
+  }
+
+  // 3b. Bulk operation inputs (generator-emitted; not from d.fields — reserved guard unaffected)
+  if (d.operations.includes('bulkUpdate')) {
+    props.push({
+      displayName: 'Items',
+      name: 'bulkItems',
+      type: 'json',
+      default: '[]',
+      description: 'JSON array of objects to update; each must include an "ID" plus the attributes to change, e.g. [{"ID":"123","name":"New"}]',
+      displayOptions: {
+        show: {
+          resource: [d.name],
+          operation: ['bulkUpdate'],
+        },
+      },
+    });
+  }
+
+  if (d.operations.includes('bulkDelete')) {
+    props.push({
+      displayName: 'IDs',
+      name: 'bulkIds',
+      type: 'json',
+      default: '[]',
+      description: 'JSON array of record IDs to delete, e.g. ["123","456"]',
+      displayOptions: {
+        show: {
+          resource: [d.name],
+          operation: ['bulkDelete'],
+        },
+      },
+    });
   }
 
   // 4. getAll extras

@@ -3,6 +3,21 @@ import { FieldDescriptor, OperationName, ResourceDescriptor } from '../registry/
 import { itGlueApiRequest, itGlueApiRequestAllItems } from '../transport/request';
 import { buildJsonApiBody, flattenResource } from './jsonapi';
 
+/** Coerce a JSON param that may arrive as a string or already-parsed array to an array. */
+function coerceArray(value: unknown): unknown[] {
+	if (typeof value === 'string') {
+		const parsed = JSON.parse(value);
+		if (!Array.isArray(parsed)) {
+			throw new TypeError('Expected a JSON array string.');
+		}
+		return parsed;
+	}
+	if (Array.isArray(value)) {
+		return value;
+	}
+	return [];
+}
+
 /** Returns [] when getAll finds zero records; the Task-18 dispatcher adds the n8n #26202 empty-output fallback. */
 export async function executeGeneric(
 	this: IExecuteFunctions,
@@ -161,14 +176,32 @@ export async function executeGeneric(
 		}
 
 		case 'bulkUpdate': {
-			const items = this.getNodeParameter('bulkItems', index, []) as IDataObject[];
+			const rawItems = this.getNodeParameter('bulkItems', index, '[]');
+			let items: unknown[];
+			try {
+				items = coerceArray(rawItems);
+			} catch {
+				throw new NodeOperationError(
+					self.getNode(),
+					'bulkUpdate requires a non-empty "Items" array.',
+					{ itemIndex: index },
+				);
+			}
+			if (items.length === 0) {
+				throw new NodeOperationError(
+					self.getNode(),
+					'bulkUpdate requires a non-empty "Items" array.',
+					{ itemIndex: index },
+				);
+			}
 			const body: IDataObject = {
 				data: items.map((it, i) => {
-					const { id, ...attrs } = it as Record<string, unknown>;
+					const item = it as Record<string, unknown>;
+					const { id, ...attrs } = item;
 					if (!id) {
 						throw new NodeOperationError(
 							self.getNode(),
-							`bulkUpdate: item at index ${i} is missing an "id" field. Each bulk item must include the record ID.`,
+							`bulkUpdate: item at index ${i} is missing "id".`,
 							{ itemIndex: index },
 						);
 					}
@@ -181,12 +214,30 @@ export async function executeGeneric(
 		}
 
 		case 'bulkDelete': {
-			const ids = this.getNodeParameter('bulkIds', index, []) as string[];
+			const rawIds = this.getNodeParameter('bulkIds', index, '[]');
+			let ids: unknown[];
+			try {
+				ids = coerceArray(rawIds);
+			} catch {
+				throw new NodeOperationError(
+					self.getNode(),
+					'bulkDelete requires a non-empty "IDs" array.',
+					{ itemIndex: index },
+				);
+			}
+			if (ids.length === 0) {
+				throw new NodeOperationError(
+					self.getNode(),
+					'bulkDelete requires a non-empty "IDs" array.',
+					{ itemIndex: index },
+				);
+			}
+			const strIds = ids.map(String);
 			const body: IDataObject = {
-				data: ids.map((id) => ({ type: d.jsonApiType, id: String(id) })),
+				data: strIds.map((id) => ({ type: d.jsonApiType, id })),
 			};
 			await itGlueApiRequest.call(this, 'DELETE', d.endpoint, body);
-			return this.helpers.returnJsonArray([{ success: true, deleted: ids }]);
+			return this.helpers.returnJsonArray([{ success: true, deleted: strIds }]);
 		}
 
 		default: {

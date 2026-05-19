@@ -20,6 +20,9 @@ export interface FieldDescriptor {
   onOperations?: OperationName[]; // default ['create','update']
   secret?: boolean;
   password?: boolean;           // mask input in UI
+  /** When true, the generated property is hidden when the node runs as an AI tool
+   *  (displayOptions.show['@tool']=[false]) — belt-and-braces; runtime reveal gate is the real guarantee. */
+  hideFromAITool?: boolean;
 }
 
 export interface ResourceDescriptor {

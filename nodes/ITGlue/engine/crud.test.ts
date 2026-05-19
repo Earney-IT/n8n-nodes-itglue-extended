@@ -79,3 +79,26 @@ test('get throws descriptive error when id param is missing', async () => {
   const ctx = makeCtx({ params: { operation: 'get' }, httpResponses: [{ data: { id: '5', type: 'contact_types', attributes: {} } }] });
   await expect(executeGeneric.call(ctx, d, 0)).rejects.toThrow(/contactTypeId.*required|required.*contactTypeId/i);
 });
+
+test('bulkUpdate sends data array and rejects empty', async () => {
+  const dd = { ...d, operations: ['bulkUpdate'] as any };
+  const ok = makeCtx({ params: { operation: 'bulkUpdate', bulkItems: [{ id: '1', name: 'A' }] }, httpResponses: [{ data: [{ id:'1', type:'contact_types', attributes:{name:'A'} }] }] });
+  await executeGeneric.call(ok, dd, 0);
+  expect(ok._calls[0].method).toBe('PATCH');
+  expect(ok._calls[0].body).toEqual({ data: [{ type:'contact_types', id:'1', attributes:{ name:'A' } }] });
+  const bad = makeCtx({ params: { operation: 'bulkUpdate', bulkItems: [] } });
+  await expect(executeGeneric.call(bad, dd, 0)).rejects.toThrow(/non-empty/);
+  const noId = makeCtx({ params: { operation: 'bulkUpdate', bulkItems: [{ name: 'X' }] } });
+  await expect(executeGeneric.call(noId, dd, 0)).rejects.toThrow(/missing "id"/);
+});
+
+test('bulkDelete sends id array, parses JSON string, rejects empty', async () => {
+  const dd = { ...d, operations: ['bulkDelete'] as any };
+  const ok = makeCtx({ params: { operation: 'bulkDelete', bulkIds: '["7","8"]' }, httpResponses: [{}] });
+  const out = await executeGeneric.call(ok, dd, 0);
+  expect(ok._calls[0].method).toBe('DELETE');
+  expect(ok._calls[0].body).toEqual({ data: [{ type:'contact_types', id:'7' }, { type:'contact_types', id:'8' }] });
+  expect(out[0].json).toEqual({ success: true, deleted: ['7','8'] });
+  const bad = makeCtx({ params: { operation: 'bulkDelete', bulkIds: [] } });
+  await expect(executeGeneric.call(bad, dd, 0)).rejects.toThrow(/non-empty/);
+});
