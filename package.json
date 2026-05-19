@@ -23,7 +23,7 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": ["dist/credentials/ITGlueApi.credentials.js"],
-    "nodes": ["dist/nodes/ITGlue/ITGlue.node.js"]
+    "nodes": ["dist/nodes/ITGlue/ItGlue.node.js"]
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

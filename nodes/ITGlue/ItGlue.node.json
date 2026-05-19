@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-itglue-extended.itGlue",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Miscellaneous"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/Earney-IT/n8n-nodes-itglue-extended"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/Earney-IT/n8n-nodes-itglue-extended"
+			}
+		]
+	}
+}

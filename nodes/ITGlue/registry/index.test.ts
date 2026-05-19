@@ -1,5 +1,6 @@
 import { registry, enabledResources } from './index';
 import { loadOptions } from '../methods/index';
+import { buildResourceProperties } from '../engine/properties';
 
 test('registry has every stable resource and unique names/types', () => {
   const names = registry.map(r => r.name);
@@ -81,10 +82,19 @@ test('no duplicate resource names', () => {
   expect(new Set(names).size).toBe(names.length);
 });
 
-test('password has passwordId field covering archive/restore/getVersions', () => {
+test('password has NO explicit passwordId field (auto idParam covers it)', () => {
   const pw = registry.find(r => r.name === 'password');
   const pidField = pw!.fields.find(f => f.name === 'passwordId');
-  expect(pidField).toBeDefined();
+  expect(pidField).toBeUndefined();
+  // idParam (passwordId) is auto-emitted for archive/restore/getVersions etc.
+  const props = buildResourceProperties(pw!);
+  const idProp = props.find(p => p.name === 'passwordId')!;
+  expect(idProp).toBeDefined();
+  expect(idProp.displayOptions!.show!.operation).toEqual(
+    expect.arrayContaining(['get', 'update', 'delete', 'archive', 'restore', 'getVersions']),
+  );
+  expect(idProp.displayOptions!.show!.operation).not.toContain('getAll');
+  expect(idProp.displayOptions!.show!.operation).not.toContain('getVersion');
 });
 
 test('relatedItem descriptor has correct special value', () => {

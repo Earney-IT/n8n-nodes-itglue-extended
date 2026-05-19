@@ -8,15 +8,9 @@ export const descriptor: ResourceDescriptor = {
   operations: ['getAll', 'get', 'create', 'update', 'delete', 'bulkDelete'],
   orgScoped: true,
   fields: [
-    {
-      name: 'organizationId',
-      attribute: 'organization-id',
-      displayName: 'Organization',
-      type: 'options',
-      loadOptionsMethod: 'getOrganizations',
-      onOperations: ['create', 'update'],
-      description: 'The organization this location belongs to',
-    },
+    // organizationId is auto-emitted by the orgScoped block in
+    // buildResourceProperties (create/getAll); an explicit field here
+    // would collide with the reserved-name guard.
     {
       name: 'name',
       attribute: 'name',

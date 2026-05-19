@@ -189,10 +189,13 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
     default: operationDefault(d.operations),
   });
 
-  // 2. ID param for get/update/delete
-  const idOps: OperationName[] = (['get', 'update', 'delete'] as OperationName[]).filter(op =>
-    d.operations.includes(op),
-  );
+  // 2. ID param for every operation that acts on a single existing record.
+  //    EXCLUDED: getAll/create/bulk*/createAndWait take no path id;
+  //    getVersion uses a separate `versionId` descriptor field.
+  const ID_EXCLUDED = new Set<OperationName>([
+    'getAll', 'create', 'bulkUpdate', 'bulkDelete', 'createAndWait', 'getVersion',
+  ]);
+  const idOps: OperationName[] = d.operations.filter(op => !ID_EXCLUDED.has(op));
   const idParamName = d.idParam ?? (d.name + 'Id');
   if (idOps.length > 0) {
     props.push({

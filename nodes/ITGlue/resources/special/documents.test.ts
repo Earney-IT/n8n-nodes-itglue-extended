@@ -10,8 +10,8 @@ test('document getAll hits documents endpoint', async () => {
 });
 
 test('section create posts to document_sections', async () => {
-  // documentId is required for sections (they belong to a document); added to reflect the create guard
-  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro', documentId: '5' }, httpResponses: [{ data: { id: 's1', type: 'document_sections', attributes: { name: 'Intro' } } }] });
+  // parentDocumentId is required for sections (they belong to a document); added to reflect the create guard
+  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro', parentDocumentId: '5' }, httpResponses: [{ data: { id: 's1', type: 'document_sections', attributes: { name: 'Intro' } } }] });
   const out = await executeDocument.call(ctx, 0);
   expect(ctx._calls[0].url).toBe('https://api.itglue.com/document_sections');
   expect(ctx._calls[0].body.data.type).toBe('document_sections');
@@ -91,14 +91,14 @@ test('section delete sends DELETE and returns success', async () => {
 });
 
 test('section create with parent documentId sets document-id attribute', async () => {
-  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro', documentId: 'doc1' },
+  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro', parentDocumentId: 'doc1' },
     httpResponses: [{ data: { id: 's2', type: 'document_sections', attributes: { name: 'Intro' } } }] });
   await executeDocument.call(ctx, 0);
   expect(ctx._calls[0].body.data.attributes['document-id']).toBe('doc1');
 });
 
 test('image create posts to document_images', async () => {
-  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'image', documentId: 'doc5' },
+  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'image', parentDocumentId: 'doc5' },
     httpResponses: [{ data: { id: 'img1', type: 'document_images', attributes: {} } }] });
   const out = await executeDocument.call(ctx, 0);
   expect(ctx._calls[0].url).toBe('https://api.itglue.com/document_images');
@@ -155,9 +155,9 @@ test('document publish missing documentId throws', async () => {
   await expect(executeDocument.call(ctx, 0)).rejects.toThrow('"documentId" is required');
 });
 
-test('section create without documentId throws', async () => {
+test('section create without parentDocumentId throws', async () => {
   const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro' } });
-  await expect(executeDocument.call(ctx, 0)).rejects.toThrow(/"documentId" is required/);
+  await expect(executeDocument.call(ctx, 0)).rejects.toThrow(/"parentDocumentId" is required/);
 });
 
 test('document update with no fields throws', async () => {

@@ -25,6 +25,11 @@ module.exports = {
 			files: ['package.json'],
 			plugins: ['eslint-plugin-n8n-nodes-base'],
 			extends: ['plugin:n8n-nodes-base/community'],
+			// package.json is not a TS source file; disable typed-linting so the
+			// parser does not require it in tsconfig.eslint.json's `include`.
+			parserOptions: {
+				project: null,
+			},
 			rules: {
 				'n8n-nodes-base/community-package-json-name-still-default': 'off',
 			},

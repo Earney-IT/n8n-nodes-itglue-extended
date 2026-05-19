@@ -27,6 +27,34 @@ test('get/delete add an id param; getAll adds returnAll+limit', () => {
   expect(props.some(p => p.name === 'returnAll')).toBe(true);
 });
 
+test('idParam renders for all single-record ops, excluding getAll/create/getVersion', () => {
+  const pw: ResourceDescriptor = {
+    name: 'pw', displayName: 'Password', jsonApiType: 'passwords', endpoint: 'passwords',
+    idParam: 'passwordId',
+    operations: ['getAll', 'get', 'update', 'delete', 'archive', 'restore', 'getVersions', 'getVersion'],
+    fields: [],
+  };
+  const props = buildResourceProperties(pw);
+  const idProp = props.find(p => p.name === 'passwordId')!;
+  expect(idProp).toBeDefined();
+  expect(idProp.displayOptions!.show!.operation).toEqual([
+    'get', 'update', 'delete', 'archive', 'restore', 'getVersions',
+  ]);
+});
+
+test('idParam renders for document publish', () => {
+  const doc: ResourceDescriptor = {
+    name: 'document', displayName: 'Document', jsonApiType: 'documents', endpoint: 'documents',
+    idParam: 'documentId',
+    operations: ['getAll', 'get', 'update', 'delete', 'publish'],
+    fields: [],
+  };
+  const props = buildResourceProperties(doc);
+  const idProp = props.find(p => p.name === 'documentId')!;
+  expect(idProp).toBeDefined();
+  expect(idProp.displayOptions!.show!.operation).toEqual(['get', 'update', 'delete', 'publish']);
+});
+
 test('include emitted for get-only resource, title-cased', () => {
   const getOnly: ResourceDescriptor = {
     name: 'contactType', displayName: 'Contact Type', jsonApiType: 'contact_types', endpoint: 'contact_types',

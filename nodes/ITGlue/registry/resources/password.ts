@@ -89,6 +89,23 @@ export const descriptor: ResourceDescriptor = {
       onOperations: ['create', 'update'],
       description: 'The OTP/TOTP secret for this password',
     },
+    {
+      name: 'otpEnabled',
+      attribute: 'otp-enabled',
+      displayName: 'OTP Enabled',
+      type: 'boolean',
+      default: false,
+      onOperations: ['create', 'update'],
+      description: 'Whether one-time-password (OTP) is enabled for this password',
+    },
+    {
+      name: 'resourceUrl',
+      attribute: 'resource-url',
+      displayName: 'Resource URL',
+      type: 'string',
+      onOperations: ['create', 'update'],
+      description: 'URL of the IT Glue resource this password is associated with',
+    },
     // versionId: used as path param for getVersion operation
     {
       name: 'versionId',
@@ -108,15 +125,9 @@ export const descriptor: ResourceDescriptor = {
       onOperations: ['get', 'getVersion'],
       description: 'Author-only: reveal the plaintext password. IGNORED when the node runs as an AI/agent tool (fail-closed). Never settable by AI.',
     },
-    // passwordId for archive/restore/getVersions (idParam auto-covers get/update/delete only)
-    {
-      name: 'passwordId',
-      attribute: 'password-id',
-      displayName: 'Password ID',
-      type: 'string',
-      onOperations: ['archive', 'restore', 'getVersions'],
-      description: 'The ID of the password',
-    },
+    // passwordId is auto-emitted by buildResourceProperties for every
+    // single-record op (get/update/delete/archive/restore/getVersions);
+    // an explicit field here would collide with the reserved-name guard.
   ],
   filters: [
     {

@@ -41,12 +41,15 @@ export const descriptor: ResourceDescriptor = {
       description: 'The document content (HTML or markdown)',
     },
     {
-      // Parent document ID for section/image create; also used by document branch for get/update/delete
-      name: 'documentId',
+      // Parent document ID for Section/Image create. The record-id for
+      // document get/update/delete/publish is auto-emitted as `documentId`
+      // (idParam) by buildResourceProperties, so this field is create-only
+      // and uses a distinct name to avoid the reserved-name guard.
+      name: 'parentDocumentId',
       attribute: 'document-id',
-      displayName: 'Document ID',
+      displayName: 'Parent Document ID',
       type: 'string',
-      onOperations: ['create', 'update'],
+      onOperations: ['create'],
       description: 'Parent document ID (required for Section/Image create)',
     },
     {

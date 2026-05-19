@@ -61,11 +61,11 @@ export async function executeDocument(
 		if (content) attributes.content = content;
 		// Set parent document-id for sections and images (not for documents themselves)
 		if (documentResource !== 'document') {
-			const docId = self.getNodeParameter('documentId', index, '') as string;
+			const docId = self.getNodeParameter('parentDocumentId', index, '') as string;
 			if (requireDocumentId && !docId) {
 				throw new NodeOperationError(
 					self.getNode(),
-					`"documentId" is required to create a ${documentResource} (sections and images belong to a document).`,
+					`"parentDocumentId" is required to create a ${documentResource} (sections and images belong to a document).`,
 					{ itemIndex: index },
 				);
 			}

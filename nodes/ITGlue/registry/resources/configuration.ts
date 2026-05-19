@@ -17,15 +17,9 @@ export const descriptor: ResourceDescriptor = {
       onOperations: ['create', 'update'],
       description: 'The configuration name',
     },
-    {
-      name: 'organizationId',
-      attribute: 'organization-id',
-      displayName: 'Organization',
-      type: 'options',
-      loadOptionsMethod: 'getOrganizations',
-      onOperations: ['create', 'update'],
-      description: 'The organization this configuration belongs to',
-    },
+    // organizationId is auto-emitted by the orgScoped block in
+    // buildResourceProperties (create/getAll); an explicit field here
+    // would collide with the reserved-name guard.
     {
       name: 'configurationTypeId',
       attribute: 'configuration-type-id',

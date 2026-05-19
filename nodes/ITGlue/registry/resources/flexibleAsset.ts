@@ -20,15 +20,9 @@ export const descriptor: ResourceDescriptor = {
       onOperations: ['create', 'update', 'getAll'],
       description: 'The flexible asset type. Required for create and getAll (IT Glue requires filter[flexible-asset-type-id])',
     },
-    {
-      name: 'organizationId',
-      attribute: 'organization-id',
-      displayName: 'Organization',
-      type: 'options',
-      loadOptionsMethod: 'getOrganizations',
-      onOperations: ['create'],
-      description: 'The organization this flexible asset belongs to',
-    },
+    // organizationId is auto-emitted by the orgScoped block in
+    // buildResourceProperties (create/getAll); an explicit field here
+    // would collide with the reserved-name guard.
     {
       name: 'traits',
       attribute: 'traits',
