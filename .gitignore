@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+.itglue-test.env
+.env
+.DS_Store
+coverage/
