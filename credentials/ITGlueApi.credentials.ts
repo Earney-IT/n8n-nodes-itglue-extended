@@ -19,6 +19,7 @@ export class ITGlueApi implements ICredentialType {
 			type: 'options',
 			default: 'api',
 			noDataExpression: true,
+			description: 'The IT Glue datacenter region your account is hosted in',
 			options: [
 				{
 					name: 'US',
@@ -43,6 +44,7 @@ export class ITGlueApi implements ICredentialType {
 			},
 			default: '',
 			required: true,
+			description: 'Your IT Glue API key (Account > Settings > API Keys). Stored encrypted.',
 		},
 	];
 
