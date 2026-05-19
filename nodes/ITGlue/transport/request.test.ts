@@ -65,3 +65,26 @@ test('apiRequestAllItems aggregates pages and stops on short page', async () => 
   const all = await itGlueApiRequestAllItems.call(ctx, 'GET', 'passwords');
   expect(all).toHaveLength(1001);
 });
+
+test('apiRequestAllItems throws after MAX_PAGES pages', async () => {
+  const ctx = makeCtx();
+  const fullPage = Array.from({ length: 1000 }, (_, i) => ({ id: String(i) }));
+  ctx.helpers.httpRequestWithAuthentication = async () => ({ data: fullPage });
+  const { itGlueApiRequestAllItems } = require('./request');
+  await expect(itGlueApiRequestAllItems.call(ctx, 'GET', 'passwords')).rejects.toThrow(/more than 200 pages/);
+});
+
+test('apiRequestAllItems does not mutate caller qs', async () => {
+  const ctx = makeCtx({ httpResponses: [{ data: [{ id: '0' }] }] });
+  const { itGlueApiRequestAllItems } = require('./request');
+  const qs: Record<string, unknown> = { filter: 'x' };
+  await itGlueApiRequestAllItems.call(ctx, 'GET', 'passwords', {}, qs);
+  expect(qs).not.toHaveProperty('page[number]');
+  expect(qs).not.toHaveProperty('page[size]');
+});
+
+test('apiRequestAllItems throws NodeOperationError when data is not an array', async () => {
+  const ctx = makeCtx({ httpResponses: [{ data: { id: '1' } }] });
+  const { itGlueApiRequestAllItems } = require('./request');
+  await expect(itGlueApiRequestAllItems.call(ctx, 'GET', 'organizations/1')).rejects.toThrow(/expected an array/);
+});

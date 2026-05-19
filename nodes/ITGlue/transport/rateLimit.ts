@@ -14,7 +14,7 @@ function retryAfterMs(error: unknown, attempt: number): number {
 	const hdr = (error as { response?: { headers?: Record<string, unknown> } })?.response?.headers;
 	const ra = hdr ? (hdr['retry-after'] ?? hdr['Retry-After']) : undefined;
 	const secs = ra !== undefined ? Number(ra) : NaN;
-	if (!Number.isNaN(secs)) return Math.max(0, secs) * 1000;
+	if (!Number.isNaN(secs)) return Math.min(Math.max(0, secs) * 1000, 60_000);
 	// exponential backoff fallback: 1s, 2s, 4s ...
 	return Math.min(2 ** attempt * 1000, 30000);
 }

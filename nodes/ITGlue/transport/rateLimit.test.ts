@@ -28,3 +28,19 @@ test('honors Retry-After header (seconds) for the delay', async () => {
   expect(r).toBe('done');
   expect(delays[0]).toBe(2000);
 });
+
+test('uses exponential backoff when Retry-After header is absent', async () => {
+  const delays: number[] = [];
+  let calls = 0;
+  const fn = async () => { if (calls++ < 2) { const e: any = new Error('rl'); e.response = { status: 429, headers: {} }; throw e; } return 'done'; };
+  await withRetry(fn, { retries: 3, sleep: async (ms: number) => { delays.push(ms); } });
+  expect(delays).toEqual([1000, 2000]);
+});
+
+test('caps an absurd Retry-After at 60s', async () => {
+  const delays: number[] = [];
+  let calls = 0;
+  const fn = async () => { if (calls++ === 0) { const e: any = new Error('rl'); e.response = { status: 429, headers: { 'retry-after': '86400' } }; throw e; } return 'ok'; };
+  await withRetry(fn, { retries: 2, sleep: async (ms: number) => { delays.push(ms); } });
+  expect(delays[0]).toBe(60000);
+});

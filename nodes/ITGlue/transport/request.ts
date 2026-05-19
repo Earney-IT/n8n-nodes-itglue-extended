@@ -78,7 +78,14 @@ export async function itGlueApiRequestAllItems(
 		}
 		query['page[number]'] = pageNumber;
 		const resp = await itGlueApiRequest.call(this, method, resource, body, query);
-		const data = (resp.data as IDataObject[]) ?? [];
+		const raw = resp.data;
+		if (raw != null && !Array.isArray(raw)) {
+			throw new NodeOperationError(
+				(this as IExecuteFunctions).getNode(),
+				`itGlueApiRequestAllItems: expected an array in "data" but got ${typeof raw}. Use itGlueApiRequest for single-resource endpoints.`,
+			);
+		}
+		const data = (raw as IDataObject[]) ?? [];
 		out.push(...data);
 		if (data.length < pageSize) break;
 		pageNumber++;
