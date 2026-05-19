@@ -33,7 +33,9 @@ export async function executeFlexibleAsset(
 		const list = (tCol.trait as Array<{ name: string; value: unknown }>) ?? [];
 		const traits: IDataObject = {};
 		for (const t of list) {
-			if (t && t.name) traits[String(t.name)] = t.value as IDataObject[string];
+			if (t && t.name && t.value !== undefined) {
+				traits[String(t.name)] = t.value as IDataObject[string];
+			}
 		}
 		return traits;
 	}
@@ -105,6 +107,9 @@ export async function executeFlexibleAsset(
 		}
 
 		case 'update': {
+			// NOTE: IT Glue PATCH on a flexible-asset REPLACES the entire traits set.
+			// Traits omitted from this call are removed from the record — callers must
+			// supply the COMPLETE desired trait set, not a partial delta.
 			const id = req('flexibleAssetId');
 			const traits = collectTraits();
 			const typeId = self.getNodeParameter('flexibleAssetTypeId', index, '') as string;
@@ -124,6 +129,7 @@ export async function executeFlexibleAsset(
 
 		case 'delete': {
 			const id = req('flexibleAssetId');
+			// Single flexible-asset delete is a plain REST DELETE-by-URL (no body), unlike bulkDelete which sends a JSON:API data array.
 			await itGlueApiRequest.call(this, 'DELETE', `flexible_assets/${id}`);
 			return this.helpers.returnJsonArray([{ success: true, id }]);
 		}

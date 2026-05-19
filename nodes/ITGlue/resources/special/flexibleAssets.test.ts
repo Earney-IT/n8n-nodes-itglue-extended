@@ -212,3 +212,24 @@ test('create with orgId uses nested org endpoint', async () => {
   await executeFlexibleAsset.call(ctx, 0);
   expect(ctx._calls[0].url).toBe('https://api.itglue.com/organizations/42/relationships/flexible_assets');
 });
+
+test('collectTraits: undefined dropped; null/0/false/empty preserved', async () => {
+  const ctx = makeCtx({
+    params: { operation: 'create', flexibleAssetTypeId: '11',
+      traits: { trait: [
+        { name: 'count', value: 0 },
+        { name: 'enabled', value: false },
+        { name: 'label', value: '' },
+        { name: 'cleared', value: null },
+        { name: 'blank', value: undefined },
+      ] } },
+    httpResponses: [{ data: { id: 'fx1', type: 'flexible_assets', attributes: {} } }],
+  });
+  await executeFlexibleAsset.call(ctx, 0);
+  const traits = ctx._calls[0].body.data.attributes.traits;
+  expect(traits.count).toBe(0);
+  expect(traits.enabled).toBe(false);
+  expect(traits.label).toBe('');
+  expect(traits.cleared).toBeNull();
+  expect('blank' in traits).toBe(false);
+});
