@@ -32,7 +32,8 @@ export function buildJsonApiBody(
 	};
 }
 
-export function flattenResource(item: IDataObject): IDataObject {
+export function flattenResource(item: IDataObject | null | undefined): IDataObject {
+	if (item == null) return {};
 	const attrs = (item.attributes ?? {}) as Record<string, unknown>;
 	const converted: Record<string, unknown> = {};
 	for (const key of Object.keys(attrs)) {

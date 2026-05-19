@@ -1,8 +1,9 @@
-import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
 import { FieldDescriptor, OperationName, ResourceDescriptor } from '../registry/types';
 import { itGlueApiRequest, itGlueApiRequestAllItems } from '../transport/request';
 import { buildJsonApiBody, flattenResource } from './jsonapi';
 
+/** Returns [] when getAll finds zero records; the Task-18 dispatcher adds the n8n #26202 empty-output fallback. */
 export async function executeGeneric(
 	this: IExecuteFunctions,
 	d: ResourceDescriptor,
@@ -33,6 +34,10 @@ export async function executeGeneric(
 	const orgId = d.orgScoped
 		? (this.getNodeParameter('organizationId', index, '') as string)
 		: '';
+
+	// IT Glue only supports org-scoped routing on collection endpoints (getAll/create).
+	// Single-resource endpoints (get/update/delete) always use the flat
+	// /<endpoint>/<id> route regardless of d.orgScoped.
 	function scoped(op: string): string {
 		if (d.orgScoped && orgId && (op === 'create' || op === 'getAll')) {
 			return `organizations/${orgId}/relationships/${d.endpoint}`;
@@ -57,7 +62,9 @@ export async function executeGeneric(
 			// Find the filter descriptor to get its attribute name
 			const filterDescriptor = (d.filters ?? []).find((f) => f.name === key);
 			const attrKey = filterDescriptor ? filterDescriptor.attribute : key;
-			qs[`filter[${attrKey}]`] = filters[key];
+			const val = filters[key];
+			if (val === '' || val === undefined || val === null) continue;
+			qs[`filter[${attrKey}]`] = val;
 		}
 	}
 
@@ -79,22 +86,50 @@ export async function executeGeneric(
 		}
 
 		case 'get': {
-			const id = this.getNodeParameter(idParamName, index) as string;
-			const qs = buildQs.call(this);
+			const id = this.getNodeParameter(idParamName, index, '') as string;
+			if (!id && id !== '0') {
+				throw new NodeOperationError(
+					self.getNode(),
+					`"${idParamName}" is required for operation "${operation}" on resource "${d.displayName}". Provide the record ID.`,
+					{ itemIndex: index },
+				);
+			}
+			const qs = buildQs();
 			const resp = await itGlueApiRequest.call(this, 'GET', `${d.endpoint}/${id}`, {}, qs);
+			if (!resp.data) {
+				throw new NodeOperationError(
+					self.getNode(),
+					`IT Glue returned no data for "${operation}" on "${d.displayName}".`,
+					{ itemIndex: index },
+				);
+			}
 			return this.helpers.returnJsonArray([flattenResource(resp.data as IDataObject)]);
 		}
 
 		case 'create': {
-			const attributes = collectAttributes.call(this);
+			const attributes = collectAttributes();
 			const body = buildJsonApiBody(d.jsonApiType, attributes);
 			const resp = await itGlueApiRequest.call(this, 'POST', scoped('create'), body);
+			if (!resp.data) {
+				throw new NodeOperationError(
+					self.getNode(),
+					`IT Glue returned no data for "${operation}" on "${d.displayName}".`,
+					{ itemIndex: index },
+				);
+			}
 			return this.helpers.returnJsonArray([flattenResource(resp.data as IDataObject)]);
 		}
 
 		case 'update': {
-			const id = this.getNodeParameter(idParamName, index) as string;
-			const attributes = collectAttributes.call(this);
+			const id = this.getNodeParameter(idParamName, index, '') as string;
+			if (!id && id !== '0') {
+				throw new NodeOperationError(
+					self.getNode(),
+					`"${idParamName}" is required for operation "${operation}" on resource "${d.displayName}". Provide the record ID.`,
+					{ itemIndex: index },
+				);
+			}
+			const attributes = collectAttributes();
 			const body = buildJsonApiBody(d.jsonApiType, attributes, undefined, id);
 			const resp = await itGlueApiRequest.call(
 				this,
@@ -102,11 +137,25 @@ export async function executeGeneric(
 				`${d.endpoint}/${id}`,
 				body,
 			);
+			if (!resp.data) {
+				throw new NodeOperationError(
+					self.getNode(),
+					`IT Glue returned no data for "${operation}" on "${d.displayName}".`,
+					{ itemIndex: index },
+				);
+			}
 			return this.helpers.returnJsonArray([flattenResource(resp.data as IDataObject)]);
 		}
 
 		case 'delete': {
-			const id = this.getNodeParameter(idParamName, index) as string;
+			const id = this.getNodeParameter(idParamName, index, '') as string;
+			if (!id && id !== '0') {
+				throw new NodeOperationError(
+					self.getNode(),
+					`"${idParamName}" is required for operation "${operation}" on resource "${d.displayName}". Provide the record ID.`,
+					{ itemIndex: index },
+				);
+			}
 			await itGlueApiRequest.call(this, 'DELETE', `${d.endpoint}/${id}`);
 			return this.helpers.returnJsonArray([{ success: true, id }]);
 		}
@@ -114,8 +163,15 @@ export async function executeGeneric(
 		case 'bulkUpdate': {
 			const items = this.getNodeParameter('bulkItems', index, []) as IDataObject[];
 			const body: IDataObject = {
-				data: items.map((it) => {
+				data: items.map((it, i) => {
 					const { id, ...attrs } = it as Record<string, unknown>;
+					if (!id) {
+						throw new NodeOperationError(
+							self.getNode(),
+							`bulkUpdate: item at index ${i} is missing an "id" field. Each bulk item must include the record ID.`,
+							{ itemIndex: index },
+						);
+					}
 					return { type: d.jsonApiType, id: String(id), attributes: attrs };
 				}),
 			};
