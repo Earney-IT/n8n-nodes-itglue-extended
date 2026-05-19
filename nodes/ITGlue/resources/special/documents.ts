@@ -53,7 +53,7 @@ export async function executeDocument(
 		return String(val);
 	}
 
-	function collectAttributes(): IDataObject {
+	function collectAttributes(requireDocumentId = false): IDataObject {
 		const attributes: IDataObject = {};
 		const name = self.getNodeParameter('name', index, '') as string;
 		if (name) attributes.name = name;
@@ -62,6 +62,13 @@ export async function executeDocument(
 		// Set parent document-id for sections and images (not for documents themselves)
 		if (documentResource !== 'document') {
 			const docId = self.getNodeParameter('documentId', index, '') as string;
+			if (requireDocumentId && !docId) {
+				throw new NodeOperationError(
+					self.getNode(),
+					`"documentId" is required to create a ${documentResource} (sections and images belong to a document).`,
+					{ itemIndex: index },
+				);
+			}
 			if (docId) attributes['document-id'] = docId;
 		}
 		return attributes;
@@ -96,7 +103,7 @@ export async function executeDocument(
 		}
 
 		case 'create': {
-			const attributes = collectAttributes();
+			const attributes = collectAttributes(true);
 			const body = buildJsonApiBody(type, attributes);
 			const resp = await itGlueApiRequest.call(this, 'POST', endpoint, body);
 			if (!resp.data) {
@@ -112,6 +119,13 @@ export async function executeDocument(
 		case 'update': {
 			const id = req(idParam);
 			const attributes = collectAttributes();
+			if (Object.keys(attributes).length === 0) {
+				throw new NodeOperationError(
+					self.getNode(),
+					'Provide at least one field to update (name, content).',
+					{ itemIndex: index },
+				);
+			}
 			const body = buildJsonApiBody(type, attributes, undefined, id);
 			const resp = await itGlueApiRequest.call(this, 'PATCH', `${endpoint}/${id}`, body);
 			if (!resp.data) {

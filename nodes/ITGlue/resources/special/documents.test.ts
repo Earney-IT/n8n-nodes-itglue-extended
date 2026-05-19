@@ -10,7 +10,8 @@ test('document getAll hits documents endpoint', async () => {
 });
 
 test('section create posts to document_sections', async () => {
-  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro' }, httpResponses: [{ data: { id: 's1', type: 'document_sections', attributes: { name: 'Intro' } } }] });
+  // documentId is required for sections (they belong to a document); added to reflect the create guard
+  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro', documentId: '5' }, httpResponses: [{ data: { id: 's1', type: 'document_sections', attributes: { name: 'Intro' } } }] });
   const out = await executeDocument.call(ctx, 0);
   expect(ctx._calls[0].url).toBe('https://api.itglue.com/document_sections');
   expect(ctx._calls[0].body.data.type).toBe('document_sections');
@@ -152,4 +153,14 @@ test('section get missing sectionId throws', async () => {
 test('document publish missing documentId throws', async () => {
   const ctx = makeCtx({ params: { operation: 'publish', documentResource: 'document' } });
   await expect(executeDocument.call(ctx, 0)).rejects.toThrow('"documentId" is required');
+});
+
+test('section create without documentId throws', async () => {
+  const ctx = makeCtx({ params: { operation: 'create', documentResource: 'section', name: 'Intro' } });
+  await expect(executeDocument.call(ctx, 0)).rejects.toThrow(/"documentId" is required/);
+});
+
+test('document update with no fields throws', async () => {
+  const ctx = makeCtx({ params: { operation: 'update', documentResource: 'document', documentId: '9' } });
+  await expect(executeDocument.call(ctx, 0)).rejects.toThrow(/at least one field/);
 });

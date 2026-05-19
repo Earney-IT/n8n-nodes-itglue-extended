@@ -96,3 +96,32 @@ test('delete missing exportId throws', async () => {
   const ctx = makeCtx({ params: { operation: 'delete' } });
   await expect(executeExport.call(ctx, 0)).rejects.toThrow('"exportId" is required');
 });
+
+test('createAndWait handles Title-Case IT Glue status (Complete)', async () => {
+  const ctx = makeCtx({ params: { operation: 'createAndWait', format: 'CSV' }, httpResponses: [
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'Queued' } } },
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'Processing' } } },
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'Complete', 'download-url': 'http://x/f.csv' } } },
+  ]});
+  const out = await executeExport.call(ctx, 0, { sleep: async () => {} });
+  expect((out[0].json as any).status).toBe('Complete');
+  expect((out[0].json as any).downloadUrl).toBe('http://x/f.csv');
+});
+
+test('createAndWait throws on Title-Case Failed', async () => {
+  const ctx = makeCtx({ params: { operation: 'createAndWait', format: 'CSV' }, httpResponses: [
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'Queued' } } },
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'Failed' } } },
+  ]});
+  await expect(executeExport.call(ctx, 0, { sleep: async () => {} })).rejects.toThrow(/failed \(status: Failed\)/i);
+});
+
+test('createAndWait skips null pollResp.data and continues polling', async () => {
+  const ctx = makeCtx({ params: { operation: 'createAndWait', format: 'CSV' }, httpResponses: [
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'pending' } } },
+    {},
+    { data: { id: 'e1', type: 'exports', attributes: { status: 'completed' } } },
+  ]});
+  const out = await executeExport.call(ctx, 0, { sleep: async () => {} });
+  expect((out[0].json as any).status).toBe('completed');
+});

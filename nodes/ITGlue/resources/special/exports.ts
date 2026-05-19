@@ -33,6 +33,38 @@ export async function executeExport(
 		return String(val);
 	}
 
+	function buildExportAttributes(): IDataObject {
+		const attrs: IDataObject = {};
+		const format = self.getNodeParameter('format', index, '') as string;
+		if (format) attrs.format = format;
+		const resourceType = self.getNodeParameter('resourceType', index, '') as string;
+		if (resourceType) attrs['resource-type'] = resourceType;
+		const resourceId = self.getNodeParameter('resourceId', index, '') as string;
+		if (resourceId) attrs['resource-id'] = resourceId;
+		const includeRelated = self.getNodeParameter('includeRelated', index, '') as string;
+		if (includeRelated) attrs['include-related'] = includeRelated;
+		return attrs;
+	}
+
+	function checkExportStatus(
+		attrs: IDataObject,
+		exportId: string,
+	): 'success' | 'pending' {
+		const rawStatus = String((attrs as any).status ?? '');
+		const status = rawStatus.toLowerCase();
+		if (status === 'complete' || status === 'completed' || status === 'done') {
+			return 'success';
+		}
+		if (status === 'failed' || status === 'error') {
+			throw new NodeOperationError(
+				self.getNode(),
+				`Export ${exportId} failed (status: ${rawStatus}).`,
+				{ itemIndex: index },
+			);
+		}
+		return 'pending';
+	}
+
 	switch (operation) {
 		case 'getAll': {
 			const returnAll = self.getNodeParameter('returnAll', index, false) as boolean;
@@ -62,16 +94,7 @@ export async function executeExport(
 		}
 
 		case 'create': {
-			const attributes: IDataObject = {};
-			const format = self.getNodeParameter('format', index, '') as string;
-			if (format) attributes.format = format;
-			const resourceType = self.getNodeParameter('resourceType', index, '') as string;
-			if (resourceType) attributes['resource-type'] = resourceType;
-			const resourceId = self.getNodeParameter('resourceId', index, '') as string;
-			if (resourceId) attributes['resource-id'] = resourceId;
-			const includeRelated = self.getNodeParameter('includeRelated', index, '') as string;
-			if (includeRelated) attributes['include-related'] = includeRelated;
-			const body = buildJsonApiBody('exports', attributes);
+			const body = buildJsonApiBody('exports', buildExportAttributes());
 			const resp = await itGlueApiRequest.call(this, 'POST', 'exports', body);
 			if (!resp.data) {
 				throw new NodeOperationError(
@@ -91,16 +114,7 @@ export async function executeExport(
 
 		case 'createAndWait': {
 			// Step 1: create the export job
-			const attributes: IDataObject = {};
-			const format = self.getNodeParameter('format', index, '') as string;
-			if (format) attributes.format = format;
-			const resourceType = self.getNodeParameter('resourceType', index, '') as string;
-			if (resourceType) attributes['resource-type'] = resourceType;
-			const resourceId = self.getNodeParameter('resourceId', index, '') as string;
-			if (resourceId) attributes['resource-id'] = resourceId;
-			const includeRelated = self.getNodeParameter('includeRelated', index, '') as string;
-			if (includeRelated) attributes['include-related'] = includeRelated;
-			const body = buildJsonApiBody('exports', attributes);
+			const body = buildJsonApiBody('exports', buildExportAttributes());
 			const createResp = await itGlueApiRequest.call(this, 'POST', 'exports', body);
 			if (!createResp.data) {
 				throw new NodeOperationError(
@@ -113,18 +127,11 @@ export async function executeExport(
 			const exportData = createResp.data as IDataObject;
 			const exportId = String(exportData.id);
 			const createAttrs = (exportData.attributes ?? {}) as IDataObject;
-			const createStatus = String(createAttrs.status ?? '');
 
 			// If already terminal on create response, return immediately
-			if (createStatus === 'completed' || createStatus === 'done') {
+			const createResult = checkExportStatus(createAttrs, exportId);
+			if (createResult === 'success') {
 				return this.helpers.returnJsonArray([flattenResource(exportData)]);
-			}
-			if (createStatus === 'failed' || createStatus === 'error') {
-				throw new NodeOperationError(
-					self.getNode(),
-					`Export ${exportId} ${createStatus}.`,
-					{ itemIndex: index },
-				);
 			}
 
 			// Step 2: poll until terminal
@@ -133,7 +140,7 @@ export async function executeExport(
 				if (polls >= POLL_CAP) {
 					throw new NodeOperationError(
 						self.getNode(),
-						`Export ${exportId} did not complete after ${POLL_CAP} polls.`,
+						`Export ${exportId} did not complete after ${POLL_CAP} polls. Use the "get" operation to check its status later.`,
 						{ itemIndex: index },
 					);
 				}
@@ -143,16 +150,9 @@ export async function executeExport(
 				if (!pollResp.data) continue;
 				const pollData = pollResp.data as IDataObject;
 				const pollAttrs = (pollData.attributes ?? {}) as IDataObject;
-				const status = String(pollAttrs.status ?? '');
-				if (status === 'completed' || status === 'done') {
+				const pollResult = checkExportStatus(pollAttrs, exportId);
+				if (pollResult === 'success') {
 					return this.helpers.returnJsonArray([flattenResource(pollData)]);
-				}
-				if (status === 'failed' || status === 'error') {
-					throw new NodeOperationError(
-						self.getNode(),
-						`Export ${exportId} ${status}.`,
-						{ itemIndex: index },
-					);
 				}
 				// else still pending/processing — loop
 			}
