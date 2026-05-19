@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
 import { ResourceDescriptor, FieldDescriptor, OperationName } from '../registry/types';
 
 const PRIORITY_ORDER: OperationName[] = ['getAll', 'get', 'create', 'update', 'delete', 'bulkUpdate', 'bulkDelete'];
@@ -10,8 +10,9 @@ function operationDefault(ops: OperationName[]): OperationName {
   return ops[0];
 }
 
-function buildOperationOption(op: OperationName, displayName: string): INodeProperties['options'] extends Array<infer T> | undefined ? T : never {
-  const map: Record<OperationName, { name: string; value: string; action: string; description: string }> = {
+// M2: typed return type, remove as any cast
+function buildOperationOption(op: OperationName, displayName: string): INodePropertyOptions {
+  const map: Record<OperationName, INodePropertyOptions> = {
     getAll: {
       name: 'Get Many',
       value: 'getAll',
@@ -55,7 +56,7 @@ function buildOperationOption(op: OperationName, displayName: string): INodeProp
       description: 'Delete multiple ' + displayName + ' records in one request',
     },
   };
-  return map[op] as any;
+  return map[op];
 }
 
 function fieldTypeDefault(type: FieldDescriptor['type']): unknown {
@@ -70,19 +71,33 @@ function fieldTypeDefault(type: FieldDescriptor['type']): unknown {
   }
 }
 
-function n8nType(type: FieldDescriptor['type']): string {
-  return type; // 'string','number','boolean','dateTime','json','options' map identically
+// M1: typed N8N_TYPE_MAP
+const N8N_TYPE_MAP: Record<FieldDescriptor['type'], INodeProperties['type']> = {
+  string: 'string',
+  number: 'number',
+  boolean: 'boolean',
+  dateTime: 'dateTime',
+  json: 'json',
+  options: 'options',
+};
+
+function n8nType(type: FieldDescriptor['type']): INodeProperties['type'] {
+  return N8N_TYPE_MAP[type];
 }
 
-function buildFieldProperty(f: FieldDescriptor, resourceName: string): INodeProperties {
-  const operations = f.onOperations ?? ['create', 'update'];
+// I2: toTitleCase helper for include option names
+function toTitleCase(s: string): string {
+  return s.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
+function buildFieldProperty(f: FieldDescriptor, resourceName: string, operations: OperationName[]): INodeProperties {
   const prop: INodeProperties = {
     displayName: f.displayName,
     name: f.name,
-    type: n8nType(f.type) as INodeProperties['type'],
+    type: n8nType(f.type),
     default: f.default !== undefined ? f.default : fieldTypeDefault(f.type),
-    required: !!f.required,
+    // I4: only emit required when true
+    ...(f.required ? { required: true } : {}),
     displayOptions: {
       show: {
         resource: [resourceName],
@@ -112,12 +127,17 @@ function buildFieldProperty(f: FieldDescriptor, resourceName: string): INodeProp
 }
 
 export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[] {
+  // C1: guard empty operations
+  if (d.operations.length === 0) {
+    throw new Error(`ResourceDescriptor '${d.name}' has no operations. At least one operation is required.`);
+  }
+
   const props: INodeProperties[] = [];
 
   // 1. Operation dropdown
   const opOptions = d.operations
     .map(op => buildOperationOption(op, d.displayName))
-    .sort((a, b) => (a as any).name.localeCompare((b as any).name));
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   props.push({
     displayName: 'Operation',
@@ -137,8 +157,8 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
   const idOps: OperationName[] = (['get', 'update', 'delete'] as OperationName[]).filter(op =>
     d.operations.includes(op),
   );
+  const idParamName = d.idParam ?? (d.name + 'Id');
   if (idOps.length > 0) {
-    const idParamName = d.idParam ?? (d.name + 'Id');
     props.push({
       displayName: d.displayName + ' ID',
       name: idParamName,
@@ -155,9 +175,14 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
     });
   }
 
-  // 3. Field params
+  // I1: reserved-name collision guard
+  const reserved = new Set(['operation', 'returnAll', 'limit', 'filters', 'include', 'organizationId', idParamName]);
   for (const f of d.fields) {
-    props.push(buildFieldProperty(f, d.name));
+    if (reserved.has(f.name)) {
+      throw new Error(`ResourceDescriptor '${d.name}': field name '${f.name}' collides with a reserved param name.`);
+    }
+    const fieldOps = f.onOperations ?? (['create', 'update'] as OperationName[]);
+    props.push(buildFieldProperty(f, d.name, fieldOps));
   }
 
   // 4. getAll extras
@@ -182,6 +207,7 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
       type: 'number',
       typeOptions: { minValue: 1 },
       default: 50,
+      // I3: trailing period
       description: 'Max number of results to return',
       displayOptions: {
         show: {
@@ -221,52 +247,47 @@ export function buildResourceProperties(d: ResourceDescriptor): INodeProperties[
         options: filterOptions as unknown as INodeProperties['options'],
       });
     }
+  }
 
-    if (d.includes && d.includes.length > 0) {
-      const includeOps = (['get', 'getAll'] as OperationName[]).filter(op =>
-        d.operations.includes(op),
-      );
-      const includeOptions = [...d.includes]
-        .sort((a, b) => a.localeCompare(b))
-        .map(i => ({ name: i, value: i }));
-
+  // C2: include emitted for get and/or getAll (outside the getAll guard)
+  if (d.includes && d.includes.length > 0) {
+    const includeOps = (['get', 'getAll'] as OperationName[]).filter(op => d.operations.includes(op));
+    if (includeOps.length > 0) {
       props.push({
         displayName: 'Include',
         name: 'include',
         type: 'multiOptions',
         default: [],
-        description: 'Related resources to embed',
-        displayOptions: {
-          show: {
-            resource: [d.name],
-            operation: includeOps,
-          },
-        },
-        options: includeOptions,
+        description: 'Related resources to embed in the response',
+        options: [...d.includes].sort((a, b) => a.localeCompare(b)).map(i => ({ name: toTitleCase(i), value: i })),
+        displayOptions: { show: { resource: [d.name], operation: includeOps } },
       });
     }
   }
 
   // 5. orgScoped
   if (d.orgScoped) {
+    // I5: only emit when at least one of create/getAll is present
     const orgOps = (['create', 'getAll'] as OperationName[]).filter(op =>
       d.operations.includes(op),
     );
-    props.push({
-      displayName: 'Organization Name or ID',
-      name: 'organizationId',
-      type: 'options',
-      typeOptions: { loadOptionsMethod: 'getOrganizations' },
-      default: '',
-      description:
-        'Scope to an organization. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-      displayOptions: {
-        show: {
-          resource: [d.name],
-          operation: orgOps,
+    if (orgOps.length > 0) {
+      props.push({
+        displayName: 'Organization Name or ID',
+        name: 'organizationId',
+        type: 'options',
+        typeOptions: { loadOptionsMethod: 'getOrganizations' },
+        default: '',
+        description:
+          'Scope to an organization. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+        displayOptions: {
+          show: {
+            resource: [d.name],
+            operation: orgOps,
+          },
         },
-      },
-    });
+      });
+    }
   }
 
   return props;
