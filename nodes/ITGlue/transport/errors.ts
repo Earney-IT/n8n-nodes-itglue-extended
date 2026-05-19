@@ -7,8 +7,9 @@ export function toNodeError(ctx: MinimalCtx, error: any): never {
 	if (error.response) {
 		const status: number = error.response.status as number;
 		const detail: string =
-			(error.response.data?.errors?.[0]?.detail as string | undefined) ??
-			(error.message as string);
+			(error.response?.data?.errors?.[0]?.detail as string | undefined) ??
+			(error?.message as string | undefined) ??
+			'No detail available';
 
 		// Cast to JsonObject for NodeApiError — runtime error objects satisfy the index signature
 		const errorObj = error as unknown as JsonObject;
@@ -24,6 +25,7 @@ export function toNodeError(ctx: MinimalCtx, error: any): never {
 					message: `IT Glue API Error (403): Access forbidden. Your API key may lack permission for this operation. (${detail})`,
 					httpCode: '403',
 				});
+			// Reached only when Task 7's retry wrapper has exhausted retries.
 			case 429:
 				throw new NodeApiError(ctx.getNode(), errorObj, {
 					message: `IT Glue API Error (429): Rate limit exceeded. IT Glue is throttling requests; retry later. (${detail})`,
@@ -37,5 +39,5 @@ export function toNodeError(ctx: MinimalCtx, error: any): never {
 		}
 	}
 
-	throw new NodeOperationError(ctx.getNode(), `IT Glue request failed: ${error.message as string}`);
+	throw new NodeOperationError(ctx.getNode(), `IT Glue request failed: ${(error?.message as string | undefined) ?? 'No error message available'}`);
 }

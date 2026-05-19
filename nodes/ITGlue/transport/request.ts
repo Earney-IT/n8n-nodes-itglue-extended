@@ -7,6 +7,7 @@ import {
 	IHttpRequestOptions,
 	ILoadOptionsFunctions,
 	IPollFunctions,
+	NodeOperationError,
 } from 'n8n-workflow';
 import { toNodeError } from './errors';
 
@@ -25,8 +26,12 @@ export async function itGlueApiRequest(
 	qs: IDataObject = {},
 ): Promise<IDataObject> {
 	const creds = await this.getCredentials('itglueApi');
+	const region = creds.region;
+	if (!region) {
+		throw new NodeOperationError(this.getNode(), 'IT Glue credential is missing the "region" field.');
+	}
 	const path = String(resource).replace(/^\/+/, '');
-	const url = `https://${String(creds.region)}.itglue.com/${path}`;
+	const url = `https://${String(region)}.itglue.com/${path}`;
 
 	const options: IHttpRequestOptions = {
 		method,
@@ -49,6 +54,6 @@ export async function itGlueApiRequest(
 			options,
 		)) as IDataObject;
 	} catch (error) {
-		toNodeError(this, error);
+		throw toNodeError(this, error);
 	}
 }
