@@ -2,28 +2,54 @@
   "name": "n8n-nodes-itglue-extended",
   "version": "2.0.0",
   "description": "Comprehensive IT Glue API node for n8n: full CRUD on every resource, secret-safe passwords, AI-agent ready",
-  "keywords": ["n8n-community-node-package", "n8n-nodes-itglue", "itglue", "kaseya", "msp"],
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n-nodes-itglue",
+    "itglue",
+    "kaseya",
+    "msp"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/Earney-IT/n8n-nodes-itglue-extended",
-  "author": { "name": "Tristen Rice", "email": "support@earneyit.com" },
-  "repository": { "type": "git", "url": "git+https://github.com/Earney-IT/n8n-nodes-itglue-extended.git" },
-  "bugs": { "url": "https://github.com/Earney-IT/n8n-nodes-itglue-extended/issues" },
-  "engines": { "node": ">=20.15" },
+  "author": {
+    "name": "Tristen Rice",
+    "email": "support@earneyit.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Earney-IT/n8n-nodes-itglue-extended.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Earney-IT/n8n-nodes-itglue-extended/issues"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
   "main": "index.js",
   "scripts": {
     "build": "npx rimraf dist && tsc && gulp build:icons",
     "dev": "tsc --watch",
+    "docs": "ts-node scripts/gen-docs.ts",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
     "test": "jest",
     "prepublishOnly": "npm run build && npm test && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
   },
-  "files": ["dist/nodes", "dist/credentials", "README.md", "CHANGELOG.md"],
+  "files": [
+    "dist/nodes",
+    "dist/credentials",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "credentials": ["dist/credentials/ITGlueApi.credentials.js"],
-    "nodes": ["dist/nodes/ITGlue/ItGlue.node.js"]
+    "credentials": [
+      "dist/credentials/ITGlueApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/ITGlue/ItGlue.node.js"
+    ]
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -37,7 +63,10 @@
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
-  "peerDependencies": { "n8n-workflow": "*" }
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
 }
