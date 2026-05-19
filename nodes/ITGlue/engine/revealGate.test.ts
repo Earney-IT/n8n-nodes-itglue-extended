@@ -111,3 +111,33 @@ test('reveal denied when mode is "trigger" but __isToolCall is true', () => {
   ctx.getNode = () => ({ parameters: { __isToolCall: true } });
   expect(canRevealPlaintext(ctx, 0)).toBe(false);
 });
+
+// ─── CRITICAL regression tests (fail on old code, pass on the fix) ────────────
+
+test('CRITICAL: real tool execution under a SAFE ambient mode is still blocked', () => {
+  const ctx = makeCtx({ mode: 'manual', params: { revealPlaintext: true } });
+  ctx.isToolExecution = () => true;            // real n8n AI-tool signal, ambient mode looks safe
+  expect(isToolExecution(ctx)).toBe(true);
+  expect(canRevealPlaintext(ctx, 0)).toBe(false);
+});
+test('CRITICAL: missing isToolExecution method (old/unknown runtime) fails closed', () => {
+  const ctx = makeCtx({ mode: 'manual', params: { revealPlaintext: true } });
+  delete ctx.isToolExecution;
+  expect(isToolExecution(ctx)).toBe(true);
+  expect(canRevealPlaintext(ctx, 0)).toBe(false);
+});
+test('isToolExecution() throwing fails closed', () => {
+  const ctx = makeCtx({ mode: 'manual', params: { revealPlaintext: true } });
+  ctx.isToolExecution = () => { throw new Error('x'); };
+  expect(canRevealPlaintext(ctx, 0)).toBe(false);
+});
+test('isToolExecution() returning undefined fails closed', () => {
+  const ctx = makeCtx({ mode: 'manual', params: { revealPlaintext: true } });
+  ctx.isToolExecution = (() => undefined) as unknown as () => boolean;
+  expect(canRevealPlaintext(ctx, 0)).toBe(false);
+});
+test('legit reveal: method present & false, safe mode, toggle true ⇒ allowed', () => {
+  const ctx = makeCtx({ mode: 'manual', params: { revealPlaintext: true } }); // makeCtx default isToolExecution:()=>false
+  expect(isToolExecution(ctx)).toBe(false);
+  expect(canRevealPlaintext(ctx, 0)).toBe(true);
+});
