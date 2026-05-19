@@ -1,7 +1,11 @@
 import { INodePropertyOptions } from 'n8n-workflow';
 
 export type OperationName =
-  | 'getAll' | 'get' | 'create' | 'update' | 'delete' | 'bulkUpdate' | 'bulkDelete';
+  | 'getAll' | 'get' | 'create' | 'update' | 'delete' | 'bulkUpdate' | 'bulkDelete'
+  // Special-handler operations (used only when special is set)
+  | 'archive' | 'restore' | 'getVersions' | 'getVersion'
+  | 'createAndWait'
+  | 'publish';
 
 export interface FieldDescriptor {
   name: string;                 // n8n param (camelCase)

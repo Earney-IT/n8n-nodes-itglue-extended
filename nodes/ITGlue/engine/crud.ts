@@ -190,8 +190,9 @@ export async function executeGeneric(
 		}
 
 		default: {
-			const _exhaustive: never = operation;
-			throw new Error(`Unknown operation: ${String(_exhaustive)}`);
+			// Note: OperationName includes special-handler-only ops (archive, restore, etc.)
+			// that are never routed to executeGeneric. Cast to string for the error message.
+			throw new Error(`Unknown operation: ${String(operation as string)}`);
 		}
 	}
 }

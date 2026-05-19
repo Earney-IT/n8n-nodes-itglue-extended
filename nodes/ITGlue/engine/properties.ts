@@ -55,6 +55,42 @@ function buildOperationOption(op: OperationName, displayName: string): INodeProp
       action: 'Bulk delete ' + displayName + ' records',
       description: 'Delete multiple ' + displayName + ' records in one request',
     },
+    archive: {
+      name: 'Archive',
+      value: 'archive',
+      action: 'Archive a ' + displayName,
+      description: 'Archive a ' + displayName + ' by ID',
+    },
+    restore: {
+      name: 'Restore',
+      value: 'restore',
+      action: 'Restore a ' + displayName,
+      description: 'Restore an archived ' + displayName + ' by ID',
+    },
+    getVersions: {
+      name: 'Get Versions',
+      value: 'getVersions',
+      action: 'Get versions of a ' + displayName,
+      description: 'Retrieve the version history of a ' + displayName,
+    },
+    getVersion: {
+      name: 'Get Version',
+      value: 'getVersion',
+      action: 'Get a specific version of a ' + displayName,
+      description: 'Retrieve a specific version of a ' + displayName + ' by version ID',
+    },
+    createAndWait: {
+      name: 'Create and Wait',
+      value: 'createAndWait',
+      action: 'Create a ' + displayName + ' and wait for completion',
+      description: 'Create a new ' + displayName + ' and poll until it completes',
+    },
+    publish: {
+      name: 'Publish',
+      value: 'publish',
+      action: 'Publish a ' + displayName,
+      description: 'Publish a ' + displayName + ' by ID',
+    },
   };
   return map[op];
 }
