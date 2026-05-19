@@ -8,7 +8,6 @@ export const loadOptions = {
 	getConfigurationStatuses: L.getConfigurationStatuses,
 	getContactTypes: L.getContactTypes,
 	getPasswordCategories: L.getPasswordCategories,
-	getPasswordFolders: L.getPasswordFolders,
 	getFlexibleAssetTypes: L.getFlexibleAssetTypes,
 	getLocations: L.getLocations,
 	getManufacturers: L.getManufacturers,

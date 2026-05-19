@@ -70,7 +70,7 @@ The node automatically uses the correct base URL for your region:
 
 See the full **[Resource Matrix](docs/resources/README-matrix.md)** for a complete table.
 
-### Stable (enabled) resources — 31 resources
+### Enabled resources — 35 resources
 
 The following resources are fully operational in v2.0.0:
 
@@ -84,23 +84,17 @@ The following resources are fully operational in v2.0.0:
 | **Assets** | Flexible Asset, Flexible Asset Field, Flexible Asset Type |
 | **Passwords** | Password, Password Category |
 | **Special** | Attachment, Related Item, Export, Document |
+| **Live-verified** | SSL Certificate, Checklist, Checklist Template, Ticket |
 
-Each stable resource supports full CRUD operations where the IT Glue API allows them (`getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete`). The Password resource also supports `archive`, `restore`, `getVersions`, and `getVersion`.
+Each resource supports full CRUD operations where the IT Glue API allows them (`getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete`). The Password resource also supports `archive`, `restore`, `getVersions`, and `getVersion`.
 
-### Verification-pending resources — 8 resources
+### Verification-pending resources — 1 resource
 
-The following resources are implemented but **not yet enabled** in the node UI. They are excluded pending live-API endpoint verification:
+The following resource is implemented but **not yet enabled** in the node UI:
 
-- Checklist
-- Checklist Task
-- Checklist Template
-- Copilot
-- Network Glue
-- Password Folder
-- SSL Certificate
-- Ticket
+- **Checklist Task** — live probe returned HTTP 401 on `GET /checklist_tasks`; likely only valid as a nested sub-route under a checklist. Will be enabled when nested-route support is added.
 
-These will be enabled in a future patch release after endpoint confirmation. See [docs/resources/README-matrix.md](docs/resources/README-matrix.md) for details.
+See [docs/resources/README-matrix.md](docs/resources/README-matrix.md) for details.
 
 ---
 
@@ -111,9 +105,7 @@ These will be enabled in a future patch release after endpoint confirmation. See
 Password plaintext is **fail-closed by default**:
 
 - **Plaintext is NEVER returned when the node runs as an AI/agent tool.** This is enforced at the code level — the `revealPlaintext` field is ignored entirely during tool execution, and responses are redacted.
-- **Revealing plaintext requires two conditions to be met simultaneously:**
-  1. The workflow is a **manual run** (not invoked by an AI agent or automation trigger).
-  2. The workflow author has explicitly toggled **"Reveal Plaintext"** to `true` in the node parameters.
+- **Revealing plaintext requires** a **non-tool workflow execution** (a normal manual, trigger, webhook, or other author-controlled run — **never** an AI-agent/tool invocation), AND the workflow author has explicitly enabled the **Reveal Plaintext** toggle (which an AI agent cannot set).
 - An AI agent **cannot set** the "Reveal Plaintext" toggle — it is a design-time author control, not a runtime parameter.
 - All password responses are **redacted by default** (`password: "[REDACTED]"`).
 - IT Glue's **Password Access** audit trail will log every API reveal. Monitor your IT Glue audit log for unexpected access events.
@@ -168,7 +160,7 @@ git clone https://github.com/Earney-IT/n8n-nodes-itglue-extended.git
 cd n8n-nodes-itglue-extended
 npm ci
 
-# Run tests (214 tests)
+# Run tests (219 tests)
 npm test
 
 # Lint

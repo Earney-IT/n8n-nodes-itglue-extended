@@ -1,4 +1,4 @@
-// GATED: endpoint unverified against the live IT Glue API. Excluded from enabledResources until confirmed by scripts/verify-endpoints.ts (Task 19 Part B).
+// Live-verified 2026-05-19: GET /checklists returned HTTP 200. Enabled.
 
 import { ResourceDescriptor } from '../../types';
 
@@ -19,15 +19,7 @@ export const descriptor: ResourceDescriptor = {
       onOperations: ['create', 'update'],
       description: 'The checklist name',
     },
-    {
-      name: 'organizationId',
-      attribute: 'organization-id',
-      displayName: 'Organization',
-      type: 'options',
-      loadOptionsMethod: 'getOrganizations',
-      onOperations: ['create', 'update'],
-      description: 'The organization this checklist belongs to',
-    },
+    // organizationId is auto-emitted by the orgScoped block in buildResourceProperties; an explicit field here would collide with the reserved-name guard.
   ],
   filters: [
     {
@@ -46,5 +38,4 @@ export const descriptor: ResourceDescriptor = {
     },
   ],
   includes: ['attachments', 'checklist_tasks', 'related_items', 'recent_versions'],
-  gated: true,
 };

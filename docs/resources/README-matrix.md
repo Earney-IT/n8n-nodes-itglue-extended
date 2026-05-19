@@ -7,16 +7,15 @@ This table covers every resource in the registry. **Enabled** resources are acti
 | Resource | Endpoint | Operations | Status |
 |---|---|---|---|
 | [Attachment](./attachment.md) | `/attachments` | `getAll`, `get`, `create`, `update`, `delete`, `bulkDelete` | ✅ enabled |
-| Checklist | `/checklists` | `getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete` | ⏳ verification-pending |
+| [Checklist](./checklist.md) | `/checklists` | `getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete` | ✅ enabled |
 | Checklist Task | `/checklist_tasks` | `getAll`, `get`, `create`, `update`, `delete` | ⏳ verification-pending |
-| Checklist Template | `/checklist_templates` | `getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete` | ⏳ verification-pending |
+| [Checklist Template](./checklistTemplate.md) | `/checklist_templates` | `getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate`, `bulkDelete` | ✅ enabled |
 | [Configuration](./configuration.md) | `/configurations` | `getAll`, `get`, `create`, `update`, `delete`, `bulkUpdate` | ✅ enabled |
 | [Configuration Interface](./configurationInterface.md) | `/configuration_interfaces` | `getAll`, `get`, `create`, `update`, `delete` | ✅ enabled |
 | [Configuration Status](./configurationStatus.md) | `/configuration_statuses` | `getAll`, `get`, `create`, `update` | ✅ enabled |
 | [Configuration Type](./configurationType.md) | `/configuration_types` | `getAll`, `get`, `create`, `update` | ✅ enabled |
 | [Contact](./contact.md) | `/contacts` | `getAll`, `get`, `create`, `update`, `delete`, `bulkDelete` | ✅ enabled |
 | [Contact Type](./contactType.md) | `/contact_types` | `getAll`, `get`, `create`, `update` | ✅ enabled |
-| Copilot | `/copilots` | `getAll`, `get` | ⏳ verification-pending |
 | [Country](./country.md) | `/countries` | `getAll`, `get` | ✅ enabled |
 | [Document](./document.md) | `/documents` | `getAll`, `get`, `create`, `update`, `delete`, `publish` | ✅ enabled |
 | [Domain](./domain.md) | `/domains` | `getAll`, `get` | ✅ enabled |
@@ -30,20 +29,18 @@ This table covers every resource in the registry. **Enabled** resources are acti
 | [Log](./log.md) | `/logs` | `getAll` | ✅ enabled |
 | [Manufacturer](./manufacturer.md) | `/manufacturers` | `getAll`, `get`, `create`, `update` | ✅ enabled |
 | [Model](./model.md) | `/models` | `getAll`, `get`, `create`, `update`, `bulkUpdate` | ✅ enabled |
-| Network Glue | `/networks` | `getAll`, `get` | ⏳ verification-pending |
 | [Operating System](./operatingSystem.md) | `/operating_systems` | `getAll`, `get` | ✅ enabled |
 | [Organization](./organization.md) | `/organizations` | `getAll`, `get`, `create`, `update`, `delete`, `bulkDelete` | ✅ enabled |
 | [Organization Status](./organizationStatus.md) | `/organization_statuses` | `getAll`, `get`, `create`, `update` | ✅ enabled |
 | [Organization Type](./organizationType.md) | `/organization_types` | `getAll`, `get`, `create`, `update` | ✅ enabled |
 | [Password](./password.md) | `/passwords` | `getAll`, `get`, `create`, `update`, `delete`, `archive`, `restore`, `getVersions`, `getVersion` | ✅ enabled |
 | [Password Category](./passwordCategory.md) | `/password_categories` | `getAll`, `get`, `create`, `update` | ✅ enabled |
-| Password Folder | `/password_folders` | `getAll`, `get`, `create`, `update`, `delete`, `bulkDelete` | ⏳ verification-pending |
 | [Platform](./platform.md) | `/platforms` | `getAll`, `get` | ✅ enabled |
 | [Region](./region.md) | `/regions` | `getAll`, `get` | ✅ enabled |
 | [Related Item](./relatedItem.md) | `/related_items` | `create`, `update`, `bulkDelete` | ✅ enabled |
-| SSL Certificate | `/ssl_certificates` | `getAll`, `get`, `create`, `update`, `delete` | ⏳ verification-pending |
-| Ticket | `/tickets` | `getAll`, `get`, `create`, `update`, `delete` | ⏳ verification-pending |
+| [SSL Certificate](./sslCertificate.md) | `/ssl_certificates` | `getAll`, `get`, `create`, `update`, `delete` | ✅ enabled |
+| [Ticket](./ticket.md) | `/tickets` | `getAll`, `get`, `create`, `update`, `delete` | ✅ enabled |
 | [User](./user.md) | `/users` | `getAll`, `get`, `update` | ✅ enabled |
 | [User Metric](./userMetric.md) | `/user_metrics` | `getAll` | ✅ enabled |
 
-**31 enabled** · **8 verification-pending**
+**35 enabled** · **1 verification-pending**

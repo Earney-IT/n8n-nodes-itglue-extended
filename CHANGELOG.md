@@ -12,7 +12,7 @@ Complete ground-up rewrite of the IT Glue n8n community node. The v2 architectur
 
 ### New features
 
-- **31 stable resources** with full CRUD support where the IT Glue API allows it:
+- **35 enabled resources** with full CRUD support where the IT Glue API allows it:
   `Organization`, `Organization Type`, `Organization Status`, `Location`,
   `Configuration`, `Configuration Interface`, `Configuration Status`, `Configuration Type`,
   `Contact`, `Contact Type`,
@@ -20,7 +20,8 @@ Complete ground-up rewrite of the IT Glue n8n community node. The v2 architectur
   `User`, `User Metric`,
   `Flexible Asset`, `Flexible Asset Field`, `Flexible Asset Type`,
   `Password`, `Password Category`,
-  `Attachment`, `Related Item`, `Export`, `Document`.
+  `Attachment`, `Related Item`, `Export`, `Document`,
+  `SSL Certificate`, `Checklist`, `Checklist Template`, `Ticket` _(live-verified 2026-05-19: HTTP 200)_.
 
 - **6 special-case handlers** for resources requiring custom request pipelines:
   - `passwords` — fail-closed reveal gate + archive/restore/versions
@@ -43,13 +44,13 @@ Complete ground-up rewrite of the IT Glue n8n community node. The v2 architectur
 
 - **`usableAsTool: true`** — the node works as a first-class AI agent tool in n8n's AI Agent node.
 
-- **214 unit and integration tests** (Jest + ts-jest) covering all handlers, the transport layer, the registry, and the properties generator.
+- **219 unit and integration tests** (Jest + ts-jest) covering all handlers, the transport layer, the registry, and the properties generator.
 
 - **CI via GitHub Actions** — lint, test, and build on every push and pull request (Node 20).
 
 - **Docs generator** (`npm run docs`) — produces per-resource Markdown docs and a full resource matrix from the registry.
 
-- **8 newer endpoints implemented but gated** pending live-API verification: `Checklist`, `Checklist Task`, `Checklist Template`, `Copilot`, `Network Glue`, `Password Folder`, `SSL Certificate`, `Ticket`. These will be enabled in a future patch release.
+- **Live-API endpoint verification (2026-05-19):** `SSL Certificate`, `Checklist`, `Checklist Template`, and `Ticket` were probed and confirmed (HTTP 200) — now enabled. `Checklist Task` returned HTTP 401 on the top-level collection endpoint (likely only valid nested under a checklist) — remains gated pending nested-route support. `Password Folder`, `Network Glue`, and `Copilot` returned HTTP 404 on this account — removed from the registry. Password `passwordFolderId` field changed from a loadOptions dropdown to a plain string field (the `/password_folders` collection endpoint does not exist, but the `password-folder-id` attribute on passwords is still valid).
 
 ### Breaking changes from v1.x
 

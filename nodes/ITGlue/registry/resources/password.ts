@@ -65,11 +65,10 @@ export const descriptor: ResourceDescriptor = {
     {
       name: 'passwordFolderId',
       attribute: 'password-folder-id',
-      displayName: 'Password Folder',
-      type: 'options',
-      loadOptionsMethod: 'getPasswordFolders',
+      displayName: 'Password Folder ID',
+      type: 'string',
       onOperations: ['create', 'update'],
-      description: 'The password folder',
+      description: 'IT Glue password folder ID (optional)',
     },
     {
       name: 'restricted',

@@ -23,7 +23,6 @@ export const getConfigurationTypes = makeLoader('configuration_types');
 export const getConfigurationStatuses = makeLoader('configuration_statuses');
 export const getContactTypes = makeLoader('contact_types');
 export const getPasswordCategories = makeLoader('password_categories');
-export const getPasswordFolders = makeLoader('password_folders');
 export const getFlexibleAssetTypes = makeLoader('flexible_asset_types');
 export const getLocations = makeLoader('locations');
 export const getManufacturers = makeLoader('manufacturers');

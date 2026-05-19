@@ -38,7 +38,7 @@
 | `otpSecret` | `otp-secret` | `string` | No | `create`, `update` | The OTP/TOTP secret for this password *(masked input)* |
 | `password` | `password` | `string` | No | `create`, `update` | The password value *(masked input)* |
 | `passwordCategoryId` | `password-category-id` | `options` | No | `create`, `update` | The password category |
-| `passwordFolderId` | `password-folder-id` | `options` | No | `create`, `update` | The password folder |
+| `passwordFolderId` | `password-folder-id` | `string` | No | `create`, `update` | IT Glue password folder ID (optional) |
 | `resourceUrl` | `resource-url` | `string` | No | `create`, `update` | URL of the IT Glue resource this password is associated with |
 | `restricted` | `restricted` | `boolean` | No | `create`, `update` | Whether this password is restricted to certain users |
 | `revealPlaintext` | `reveal-plaintext` | `boolean` | No | `get`, `getVersion` | Author-only: reveal the plaintext password. IGNORED when the node runs as an AI/agent tool (fail-closed). Never settable by AI. |

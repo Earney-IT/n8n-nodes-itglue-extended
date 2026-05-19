@@ -1,4 +1,4 @@
-// GATED: endpoint unverified against the live IT Glue API. Excluded from enabledResources until confirmed by scripts/verify-endpoints.ts (Task 19 Part B).
+// GATED: live probe (2026-05-19) returned HTTP 401 on GET /checklist_tasks — not a confirmed top-level collection (likely only valid nested under a checklist). Excluded from enabledResources pending nested-route support.
 
 import { ResourceDescriptor } from '../../types';
 

@@ -1,4 +1,4 @@
-// GATED: endpoint unverified against the live IT Glue API. Excluded from enabledResources until confirmed by scripts/verify-endpoints.ts (Task 19 Part B).
+// Live-verified 2026-05-19: GET /checklist_templates returned HTTP 200. Enabled.
 
 import { ResourceDescriptor } from '../../types';
 
@@ -20,5 +20,4 @@ export const descriptor: ResourceDescriptor = {
     },
   ],
   includes: ['attachments'],
-  gated: true,
 };

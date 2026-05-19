@@ -31,15 +31,13 @@ import { descriptor as attachment } from './resources/attachment';
 import { descriptor as relatedItem } from './resources/relatedItem';
 import { descriptor as exportResource } from './resources/export';
 import { descriptor as document } from './resources/document';
-// Gated resources (unverified endpoints — excluded from enabledResources until confirmed by scripts/verify-endpoints.ts)
-import { descriptor as passwordFolder } from './resources/gated/passwordFolder';
+// Live-verified resources (2026-05-19): enabled (HTTP 200 confirmed)
 import { descriptor as sslCertificate } from './resources/gated/sslCertificate';
 import { descriptor as checklist } from './resources/gated/checklist';
-import { descriptor as checklistTask } from './resources/gated/checklistTask';
 import { descriptor as checklistTemplate } from './resources/gated/checklistTemplate';
 import { descriptor as ticket } from './resources/gated/ticket';
-import { descriptor as networkGlue } from './resources/gated/networkGlue';
-import { descriptor as copilot } from './resources/gated/copilot';
+// Still gated: HTTP 401 — likely only valid nested under a checklist, not a top-level collection
+import { descriptor as checklistTask } from './resources/gated/checklistTask';
 
 export const registry: ResourceDescriptor[] = [
   // Generic resources
@@ -75,15 +73,13 @@ export const registry: ResourceDescriptor[] = [
   relatedItem,
   exportResource,
   document,
-  // Gated resources (unverified — not in node UI until Part B live verification)
-  passwordFolder,
+  // Live-verified resources (enabled — HTTP 200 confirmed 2026-05-19)
   sslCertificate,
   checklist,
-  checklistTask,
   checklistTemplate,
   ticket,
-  networkGlue,
-  copilot,
+  // Still gated: HTTP 401 on top-level endpoint (likely only valid nested under a checklist)
+  checklistTask,
 ];
 
 export const enabledResources: ResourceDescriptor[] = registry.filter(r => !r.gated);
