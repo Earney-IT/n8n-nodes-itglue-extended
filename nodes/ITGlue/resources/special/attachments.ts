@@ -76,8 +76,16 @@ export async function executeAttachment(
 			if (!base64) {
 				const binaryProp = this.getNodeParameter('binaryPropertyName', index, '') as string;
 				if (binaryProp) {
-					const buf = await this.helpers.getBinaryDataBuffer(index, binaryProp);
-					base64 = buf.toString('base64');
+					if (typeof this.helpers.getBinaryDataBuffer !== 'function') {
+						throw new NodeOperationError(self.getNode(), 'Binary data helpers are not available in this execution context.', { itemIndex: index });
+					}
+					try {
+						const buf = await this.helpers.getBinaryDataBuffer(index, binaryProp);
+						// base64 encoding doubles memory; IT Glue has no multipart endpoint — watch large (>10MB) attachments.
+						base64 = buf.toString('base64');
+					} catch (e) {
+						throw new NodeOperationError(self.getNode(), `Could not read binary property "${binaryProp}": ${(e as Error).message}`, { itemIndex: index });
+					}
 				}
 			}
 
@@ -117,6 +125,9 @@ export async function executeAttachment(
 			if (name) {
 				attributes.name = name;
 			}
+			if (Object.keys(attributes).length === 0) {
+				throw new NodeOperationError(self.getNode(), 'Provide at least one field to update (e.g. "name").', { itemIndex: index });
+			}
 			const body = buildJsonApiBody('attachments', attributes, undefined, attachmentId);
 			const resp = await itGlueApiRequest.call(this, 'PATCH', `${base}/${attachmentId}`, body);
 			if (!resp.data) {
@@ -137,11 +148,15 @@ export async function executeAttachment(
 			await itGlueApiRequest.call(this, 'DELETE', base, {
 				data: [{ type: 'attachments', id: attachmentId }],
 			});
+			// IT Glue DELETE attachments returns 204 no-body; success:true is a synthetic ack.
 			return this.helpers.returnJsonArray([{ success: true, id: attachmentId }]);
 		}
 
 		case 'bulkDelete': {
 			const ids = this.getNodeParameter('attachmentIds', index, []) as string[];
+			if (!Array.isArray(ids) || ids.length === 0) {
+				throw new NodeOperationError(self.getNode(), '"attachmentIds" must contain at least one ID for bulkDelete.', { itemIndex: index });
+			}
 			await itGlueApiRequest.call(this, 'DELETE', base, {
 				data: ids.map((id) => ({ type: 'attachments', id: String(id) })),
 			});

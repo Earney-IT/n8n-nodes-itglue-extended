@@ -108,3 +108,25 @@ test('create with no file content throws NodeOperationError', async () => {
   });
   await expect(executeAttachment.call(ctx, 0)).rejects.toThrow('Provide fileBase64 or a binaryPropertyName');
 });
+
+test('bulkDelete with empty ids throws', async () => {
+  const ctx = makeCtx({ params: { operation: 'bulkDelete', resourceType: 'passwords', resourceId: '7', attachmentIds: [] } });
+  await expect(executeAttachment.call(ctx, 0)).rejects.toThrow(/at least one ID/);
+});
+
+test('update with no fields throws', async () => {
+  const ctx = makeCtx({ params: { operation: 'update', resourceType: 'passwords', resourceId: '7', attachmentId: 'a1' } });
+  await expect(executeAttachment.call(ctx, 0)).rejects.toThrow(/at least one field/);
+});
+
+test('binary requested but helper missing throws clear error', async () => {
+  const ctx = makeCtx({ params: { operation: 'create', resourceType: 'passwords', resourceId: '7', binaryPropertyName: 'data' } });
+  // makeCtx has no getBinaryDataBuffer by default
+  await expect(executeAttachment.call(ctx, 0)).rejects.toThrow(/Binary data helpers are not available/);
+});
+
+test('binary read failure throws wrapped NodeOperationError', async () => {
+  const ctx = makeCtx({ params: { operation: 'create', resourceType: 'passwords', resourceId: '7', binaryPropertyName: 'data' } });
+  ctx.helpers.getBinaryDataBuffer = async () => { throw new Error('no such property'); };
+  await expect(executeAttachment.call(ctx, 0)).rejects.toThrow(/Could not read binary property "data": no such property/);
+});
