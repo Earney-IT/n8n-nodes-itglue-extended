@@ -1,4 +1,5 @@
 import { registry, enabledResources } from './index';
+import { loadOptions } from '../methods/index';
 
 test('registry has every stable resource and unique names/types', () => {
   const names = registry.map(r => r.name);
@@ -95,10 +96,27 @@ test('relatedItem descriptor has correct special value', () => {
 test('export descriptor has createAndWait operation', () => {
   const exp = registry.find(r => r.name === 'export');
   expect(exp).toBeDefined();
-  expect(exp!.operations).toContain('createAndWait' as any);
+  expect(exp!.operations).toContain('createAndWait');
 });
 
 test('document descriptor has publish operation', () => {
   const doc = registry.find(r => r.name === 'document');
-  expect(doc!.operations).toContain('publish' as any);
+  expect(doc!.operations).toContain('publish');
+});
+
+test('every loadOptionsMethod referenced in the registry exists in methods/index loadOptions', () => {
+  for (const r of registry) {
+    for (const f of [...r.fields, ...(r.filters ?? [])]) {
+      if (f.loadOptionsMethod) {
+        expect(Object.prototype.hasOwnProperty.call(loadOptions, f.loadOptionsMethod)).toBe(true);
+      }
+    }
+  }
+});
+
+test('every jsonApiType is plural lowercase_underscore and endpoint matches it', () => {
+  for (const r of registry) {
+    expect(r.jsonApiType).toMatch(/^[a-z][a-z_]*s$/);
+    expect(r.endpoint).toBe(r.jsonApiType);
+  }
 });

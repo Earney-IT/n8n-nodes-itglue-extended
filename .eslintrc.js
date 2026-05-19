@@ -273,6 +273,7 @@ module.exports = {
 				'n8n-nodes-base/node-param-option-name-duplicate': 'off',
 				'n8n-nodes-base/node-param-option-value-duplicate': 'off',
 				'n8n-nodes-base/node-param-options-type-unsorted-items': 'off',
+				'n8n-nodes-base/node-param-option-description-identical-to-name': 'off',
 				'n8n-nodes-base/node-param-required-false': 'off',
 				'n8n-nodes-base/node-param-type-options-password-missing': 'off',
 			},

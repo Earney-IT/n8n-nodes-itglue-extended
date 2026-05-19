@@ -6,7 +6,6 @@ export const descriptor: ResourceDescriptor = {
   jsonApiType: 'organizations',
   endpoint: 'organizations',
   operations: ['getAll', 'get', 'create', 'update', 'delete', 'bulkDelete'],
-  orgScoped: false,
   fields: [
     {
       name: 'name',
