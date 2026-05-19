@@ -1,0 +1,42 @@
+# Belt-and-suspenders alongside the package.json `files` allowlist.
+# Ensures sensitive/build-only files are never shipped even if `files` is broadened.
+
+# Tests
+**/*.test.ts
+**/*.test.js
+**/__testutils__/**
+jest.config.js
+jest.config.ts
+
+# Source / build config
+tsconfig*.json
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+gulpfile.js
+gulpfile.ts
+
+# Scripts and docs (not shipped in the npm package)
+scripts/
+docs/
+
+# CI and git
+.github/
+
+# Lint / format config
+.eslintrc*
+.eslintrc.prepublish.js
+.prettierrc*
+.prettierignore
+
+# Environment / secrets
+.env
+.env.*
+.itglue-test.env
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Source maps (disabled in tsconfig but belt-and-suspenders)
+**/*.map
