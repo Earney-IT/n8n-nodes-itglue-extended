@@ -6,8 +6,24 @@ import {
 } from 'n8n-workflow';
 import { itGlueApiRequest, itGlueApiRequestAllItems } from '../../transport/request';
 import { buildJsonApiBody, flattenResource } from '../../engine/jsonapi';
-import { redactSecrets } from '../../engine/redact';
+import { redactSecrets, REDACTED } from '../../engine/redact';
 import { canRevealPlaintext } from '../../engine/revealGate';
+
+// Candidate secret-bearing attribute names on password_versions payloads.
+// Redaction is key-name based; IT Glue's version schema is not publicly
+// confirmed, so for version ops we additionally blank this fixed set
+// regardless of the generic regex (defense-in-depth, fail-closed).
+const VERSION_SECRET_KEYS = ['password', 'otpSecret', 'otp_secret', 'value', 'content', 'secret', 'credential', 'secretKey', 'secret_key'];
+
+function stripVersionSecrets(item: IDataObject): IDataObject {
+	const out: IDataObject = { ...item };
+	for (const k of Object.keys(out)) {
+		if (VERSION_SECRET_KEYS.includes(k) || VERSION_SECRET_KEYS.includes(k.toLowerCase())) {
+			out[k] = REDACTED;
+		}
+	}
+	return out;
+}
 
 /**
  * SECURITY-CRITICAL special handler for IT Glue Passwords.
@@ -138,9 +154,13 @@ export async function executePassword(
 		return { ...redactSecrets(item), _passwordRedactedReason: redactedReason };
 	}
 
-	function finalizeList(items: IDataObject[]): IDataObject[] {
+	function finalizeList(items: IDataObject[], versionOp = false): IDataObject[] {
 		// reveal can never be true here (bulk ⇒ single===false).
-		return items.map((i) => ({ ...redactSecrets(i), _passwordRedactedReason: redactedReason }));
+		return items.map((i) => {
+			const redacted = redactSecrets(i);
+			const stripped = versionOp ? stripVersionSecrets(redacted) : redacted;
+			return { ...stripped, _passwordRedactedReason: redactedReason };
+		});
 	}
 
 	switch (operation) {
@@ -250,7 +270,7 @@ export async function executePassword(
 				items = (resp.data as IDataObject[]) ?? [];
 			}
 			const flat = items.map((r) => flattenResource(r));
-			return this.helpers.returnJsonArray(finalizeList(flat));
+			return this.helpers.returnJsonArray(finalizeList(flat, true));
 		}
 
 		case 'getVersion': {
@@ -271,7 +291,15 @@ export async function executePassword(
 				);
 			}
 			const item = flattenResource(resp.data as IDataObject);
-			return this.helpers.returnJsonArray([finalizeSingle(item)]);
+			if (reveal) {
+				// Reveal path: return plaintext as-is (intended, manual context only).
+				return this.helpers.returnJsonArray([{ ...item, _passwordRevealed: true }]);
+			}
+			// Non-reveal path: apply existing key-name-based redaction THEN
+			// key-name-independent strip for version payloads (defense-in-depth).
+			const redacted = redactSecrets(item);
+			const stripped = stripVersionSecrets(redacted);
+			return this.helpers.returnJsonArray([{ ...stripped, _passwordRedactedReason: redactedReason }]);
 		}
 
 		default: {

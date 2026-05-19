@@ -59,3 +59,29 @@ test('backstop: reveal forced off if isToolExecution method is absent (old runti
   expect(ctx._calls[0].qs?.show_password).toBeUndefined();
   expect((out[0].json as any).password).toBe(REDACTED);
 });
+
+test('getVersion redacts a non-standard secret field name on non-reveal (F1)', async () => {
+  const ctx = makeCtx({ isTool: true, params: { operation: 'getVersion', versionId: 'v9', revealPlaintext: true },
+    httpResponses: [{ data: { id: 'v9', type: 'password_versions', attributes: { value: 'OLDPLAINTEXT', content: 'x', name: 'VPN' } } }] });
+  const out = await executePassword.call(ctx, 0);
+  expect((out[0].json as any).value).toBe(REDACTED);
+  expect((out[0].json as any).content).toBe(REDACTED);
+  expect((out[0].json as any).name).toBe('VPN');
+});
+
+test('getVersions strips non-standard secret field names (bulk, F1)', async () => {
+  const ctx = makeCtx({ mode: 'manual', params: { operation: 'getVersions', passwordId: '3', revealPlaintext: true },
+    httpResponses: [{ data: [{ id: 'v1', type: 'password_versions', attributes: { value: 'OLD', password: 'p', name: 'A' } }] }] });
+  const out = await executePassword.call(ctx, 0);
+  expect((out[0].json as any).value).toBe(REDACTED);
+  expect((out[0].json as any).password).toBe(REDACTED);
+  expect((out[0].json as any).name).toBe('A');
+});
+
+test('getVersion with legitimate reveal still returns the value (manual, non-tool)', async () => {
+  const ctx = makeCtx({ mode: 'manual', params: { operation: 'getVersion', versionId: 'v9', revealPlaintext: true },
+    httpResponses: [{ data: { id: 'v9', type: 'password_versions', attributes: { password: 'shownsecret', name: 'VPN' } } }] });
+  const out = await executePassword.call(ctx, 0);
+  expect((out[0].json as any).password).toBe('shownsecret');
+  expect((out[0].json as any)._passwordRevealed).toBe(true);
+});
