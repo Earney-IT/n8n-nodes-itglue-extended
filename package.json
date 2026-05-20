@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-itglue-extended",
-  "version": "2.0.0",
-  "description": "Comprehensive IT Glue API node for n8n: full CRUD on every resource, secret-safe passwords, AI-agent ready",
+  "version": "2.0.1",
+  "description": "Search and manage IT Glue documentation in n8n: organizations, configurations, contacts, passwords (create/rotate — values never returned to AI), documents, flexible assets, SSL certificates, tickets, and more. Full CRUD, AI-agent ready, fail-closed secret-safe.",
   "keywords": [
     "n8n-community-node-package",
     "n8n-nodes-itglue",

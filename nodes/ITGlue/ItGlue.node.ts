@@ -33,7 +33,7 @@ export class ITGlue implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description:
-			'Consume the IT Glue API — full CRUD across all resources, secret-safe passwords, AI-agent ready',
+			'Search and manage IT Glue documentation: organizations, configurations, contacts, passwords (create/rotate — values never returned to AI), documents, flexible assets, SSL certificates, tickets, and more. Use for IT asset lookup, MSP documentation, password rotation, and config inventory.',
 		defaults: {
 			name: 'IT Glue',
 		},

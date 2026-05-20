@@ -4,6 +4,16 @@ All notable changes to `n8n-nodes-itglue-extended` are documented here.
 
 ---
 
+## 2.0.1 — 2026-05-20
+
+### Changed
+
+- LLM tool description (`description.description`) rewritten to be action-oriented and explicit about capabilities. Helps AI agents pick this tool when relevant — "search and manage IT Glue documentation … password rotation, config inventory" instead of the generic "consume the IT Glue API". Same wording mirrored on npm.
+
+No functional or security changes — `usableAsTool` remains true; reveal gate, backstop, redaction, and 223 tests unchanged.
+
+---
+
 ## 2.0.0 — 2026-05-19
 
 ### Overview
