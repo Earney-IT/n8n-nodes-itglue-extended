@@ -11,7 +11,7 @@ export function makeCtx(opts: {
   const calls: any[] = [];
   const ctx: any = {
     getInputData: () => [{ json: {} }],
-    getNode: () => ({ name: 'IT Glue', type: 'itGlue', parameters: opts.isTool ? { __isToolCall: true } : {} }),
+    getNode: () => ({ name: 'IT Glue', type: 'itGlueExtended', parameters: opts.isTool ? { __isToolCall: true } : {} }),
     getMode: () => opts.mode ?? 'manual',
     // Models REAL n8n IExecuteFunctions: the method always exists; returns
     // true only when invoked as an AI Agent tool. Default (non-tool) ⇒ false.

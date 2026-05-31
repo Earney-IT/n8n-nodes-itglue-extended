@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-itglue-extended",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Search and manage IT Glue documentation in n8n: organizations, configurations, contacts, passwords (create/rotate — values never returned to AI), documents, flexible assets, SSL certificates, tickets, and more. Full CRUD, AI-agent ready, fail-closed secret-safe.",
   "keywords": [
     "n8n-community-node-package",
@@ -48,7 +48,7 @@
       "dist/credentials/ITGlueApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ITGlue/ItGlue.node.js"
+      "dist/nodes/ITGlue/ItGlueExtended.node.js"
     ]
   },
   "devDependencies": {

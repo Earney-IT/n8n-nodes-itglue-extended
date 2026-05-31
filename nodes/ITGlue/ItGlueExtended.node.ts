@@ -26,8 +26,12 @@ const resourceDefault =
 
 export class ITGlue implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'IT Glue',
-		name: 'itGlue',
+		displayName: 'IT Glue Extended',
+		// Internal name is `itGlueExtended` (not `itGlue`) to avoid a
+		// case-insensitive collision with the third-party `n8n-nodes-itglue`
+		// package (which uses `iTGlue`); n8n enforces a unique constraint on
+		// installed-node names that treats both as identical.
+		name: 'itGlueExtended',
 		icon: 'file:itglue.svg',
 		group: ['transform'],
 		version: 1,
@@ -35,7 +39,7 @@ export class ITGlue implements INodeType {
 		description:
 			'Search and manage IT Glue documentation: organizations, configurations, contacts, passwords (create/rotate — values never returned to AI), documents, flexible assets, SSL certificates, tickets, and more. Use for IT asset lookup, MSP documentation, password rotation, and config inventory.',
 		defaults: {
-			name: 'IT Glue',
+			name: 'IT Glue Extended',
 		},
 		usableAsTool: true,
 		inputs: [NodeConnectionTypes.Main],

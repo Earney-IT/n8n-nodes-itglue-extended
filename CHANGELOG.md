@@ -4,6 +4,15 @@ All notable changes to `n8n-nodes-itglue-extended` are documented here.
 
 ---
 
+## 2.1.0 — 2026-05-31
+
+### Changed
+
+- **Internal node name renamed** from `itGlue` to `itGlueExtended` and **display name** changed to **"IT Glue Extended"**. This avoids a case-insensitive collision with the unrelated third-party `n8n-nodes-itglue` package (which uses `iTGlue`) — n8n enforces a unique constraint on installed-node names that treats `itGlue` and `iTGlue` as identical, so the two packages could not coexist before.
+- The full node type identifier becomes `n8n-nodes-itglue-extended.itGlueExtended`. Workflows still referencing the previous `n8n-nodes-itglue-extended.itGlue` type need their node `type` field updated.
+
+---
+
 ## 2.0.1 — 2026-05-20
 
 ### Changed
