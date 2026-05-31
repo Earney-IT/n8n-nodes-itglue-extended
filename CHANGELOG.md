@@ -4,6 +4,14 @@ All notable changes to `n8n-nodes-itglue-extended` are documented here.
 
 ---
 
+## 2.1.2 — 2026-05-31
+
+### Fixed
+
+- Renamed the exported node class from `ITGlue` to `ItGlueExtended` to match the filename root. n8n's community-package loader looks up the node class by the PascalCase filename and was unable to find an export named `ItGlueExtended` in `ItGlueExtended.node.js` because the class was still named `ITGlue` — leaving the loader with a generic "the specified package could not be loaded" error. Renaming the class restores load-on-install.
+
+---
+
 ## 2.1.1 — 2026-05-31
 
 ### Fixed

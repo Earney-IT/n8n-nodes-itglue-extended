@@ -24,7 +24,9 @@ const resourceDefault =
 	sortedResources.find((d) => d.name === 'organization')?.name ??
 	sortedResources[0].name;
 
-export class ITGlue implements INodeType {
+// Class name must match the filename root (`ItGlueExtended` ← ItGlueExtended.node.js)
+// so n8n's community-package loader can find the exported node class by name.
+export class ItGlueExtended implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'IT Glue Extended',
 		// Internal name is `itGlueExtended` (not `itGlue`) to avoid a
