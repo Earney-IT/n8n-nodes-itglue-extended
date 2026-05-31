@@ -4,6 +4,14 @@ All notable changes to `n8n-nodes-itglue-extended` are documented here.
 
 ---
 
+## 2.1.1 — 2026-05-31
+
+### Fixed
+
+- Removed the unused `main: "index.js"` entry (and the empty `index.js` file) from the package. n8n's community-package loader was calling `require(packageName)` on it, getting an empty exports object, and failing with "the specified package could not be loaded" before the explicit `n8n.nodes` paths were ever consulted.
+
+---
+
 ## 2.1.0 — 2026-05-31
 
 ### Changed
